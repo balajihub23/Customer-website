@@ -1,0 +1,155 @@
+<div class="auth-container">
+  <!-- Step 1: Phone Number Input Screen -->
+  <div *ngIf="step === 'phone'" class="auth-card phone-step">
+    <div class="brand-icon-wrapper">
+      <div class="yellow-icon-box">
+        <svg viewBox="0 0 36 36" fill="none">
+          <rect width="36" height="36" rx="10" fill="#FFC107"/>
+          <path d="M8 22 L14 14 L22 14 L28 22 Z" fill="#1C1C1E"/>
+          <circle cx="12" cy="24" r="3" fill="#1C1C1E"/>
+          <circle cx="24" cy="24" r="3" fill="#1C1C1E"/>
+        </svg>
+      </div>
+    </div>
+
+    <h1 class="welcome-title">Welcome</h1>
+    <p class="welcome-sub">Enter your mobile number to continue</p>
+
+    <div class="form-group">
+      <label>Mobile Number</label>
+      <div class="phone-input-group">
+        <div class="country-selector">
+          <span class="flag">🇮🇳</span>
+          <span class="code">+91</span>
+          <span class="chevron">▼</span>
+        </div>
+        <input 
+          type="tel" 
+          placeholder="Enter mobile number"
+          [value]="phoneNumber"
+          (input)="onPhoneInput($event)"
+          maxlength="10"
+        />
+      </div>
+    </div>
+
+    <div *ngIf="errorMessage" class="error-banner">
+      {{ errorMessage }}
+    </div>
+
+    <button 
+      class="submit-btn" 
+      [disabled]="phoneNumber.length !== 10 || loading"
+      (click)="submitPhone()">
+      <span *ngIf="!loading">Continue ➔</span>
+      <span *ngIf="loading" class="spinner"></span>
+    </button>
+
+    <p class="legal-text">
+      By continuing, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
+    </p>
+  </div>
+
+  <!-- Step 2: Verify OTP Screen -->
+  <div *ngIf="step === 'otp'" class="auth-card otp-step">
+    <button class="back-btn" (click)="goBack()">➔</button>
+
+    <h1 class="auth-heading">Verify OTP</h1>
+    <p class="auth-sub">Enter the 6-digit code sent to<br><strong>+91 {{ phoneNumber }}</strong></p>
+
+    <div class="otp-boxes">
+      @for (digit of otpDigits; track $index) {
+        <input 
+          type="text" 
+          maxlength="1"
+          class="otp-field"
+          [class.filled]="otpDigits[$index] !== ''"
+          [value]="otpDigits[$index]"
+          (input)="onOtpInput($event, $index)"
+          (keyup)="onOtpKeyDown($event, $index)"
+          (paste)="onOtpPaste($event)"
+          (keyup.enter)="submitOtp()"
+        />
+      }
+    </div>
+
+    <div class="resend-container">
+      <span *ngIf="resendTimer > 0" class="timer-text">Resend OTP in {{ resendTimer }}s</span>
+      <button *ngIf="resendTimer === 0" class="resend-link" (click)="submitPhone()">Resend OTP</button>
+    </div>
+
+    <button 
+      class="submit-btn" 
+      [disabled]="!isOtpComplete || loading"
+      (click)="submitOtp()">
+      <span *ngIf="!loading">Verify & Continue ➔</span>
+      <span *ngIf="loading" class="spinner"></span>
+    </button>
+  </div>
+
+  <!-- Step 3: Create Profile Screen -->
+  <div *ngIf="step === 'profile'" class="auth-card profile-step">
+    <button class="back-btn" (click)="goBack()">➔</button>
+
+    <h1 class="auth-heading">Create your profile</h1>
+    <p class="auth-sub">Complete your profile to start booking</p>
+
+    <div class="profile-form">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" placeholder="Enter your full name" [(ngModel)]="profileData.fullName" />
+      </div>
+
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" placeholder="e.g., johnoe@gmail.com" [(ngModel)]="profileData.email" />
+      </div>
+
+      <div class="form-group">
+        <label>City</label>
+        <select [(ngModel)]="profileData.city">
+          <option *ngFor="let city of cities" [value]="city">{{ city }}</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Language</label>
+        <select [(ngModel)]="profileData.language">
+          <option *ngFor="let lang of languages" [value]="lang">{{ lang }}</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Referral Number (Optional)</label>
+        <input type="text" placeholder="Register Mobile number" [(ngModel)]="profileData.referralCode" />
+      </div>
+    </div>
+
+    <div *ngIf="errorMessage" class="error-banner">
+      {{ errorMessage }}
+    </div>
+
+    <button class="submit-btn" [disabled]="loading" (click)="submitProfile()">
+      <span *ngIf="!loading">Continue ➔</span>
+      <span *ngIf="loading" class="spinner"></span>
+    </button>
+  </div>
+
+  <!-- Step 4: Profile Success / Welcome Screen -->
+  <div *ngIf="step === 'success'" class="auth-card success-step">
+    <div class="success-icon-wrapper">
+      <div class="yellow-circle-check">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#1C1C1E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+    </div>
+
+    <h1 class="success-title">Welcome, {{ profileData.fullName || 'User' }}</h1>
+    <p class="success-sub">Your profile is ready. Book a service near you in a few taps.</p>
+
+    <button class="submit-btn" (click)="finishAuth()">
+      Explore App ➔
+    </button>
+  </div>
+</div>

@@ -1,1 +1,201 @@
-/* You can add global styles to this file, and also import other style files */
+/* Rentron Customer App Global Design Tokens & Theme Variables */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* Default Light Mode Tokens */
+  --app-background: #F8F9FB;
+  --bg-primary: #F8F9FB;
+  --bg-card: #FFFFFF;
+  --surface: #FFFFFF;
+  --surface-secondary: #F3F4F6;
+  --surface-tertiary: #E5E7EB;
+  --text-primary: #111827;
+  --text-secondary: #4B5563;
+  --text-muted: #9CA3AF;
+  --border: #E5E7EB;
+  --border-color: #E5E7EB;
+  --border-focus: #FFC107;
+  
+  /* Rentron Yellow Branding */
+  --primary: #FFC107;
+  --primary-hover: #E0A800;
+  --primary-light: #FFF8E1;
+  --primary-contrast: #111827;
+  
+  /* Status & Utility Tokens */
+  --success: #10B981;
+  --success-light: #D1FAE5;
+  --warning: #F59E0B;
+  --warning-light: #FEF3C7;
+  --danger: #EF4444;
+  --danger-light: #FEE2E2;
+  --info: #3B82F6;
+  --info-light: #DBEAFE;
+  --disabled: #D1D5DB;
+  --overlay: rgba(0, 0, 0, 0.5);
+  
+  /* Shadows & Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.12);
+  --font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Dark Theme Overrides */
+[data-theme="dark"] {
+  --app-background: #0F172A;
+  --bg-primary: #0F172A;
+  --bg-card: #1E293B;
+  --surface: #1E293B;
+  --surface-secondary: #334155;
+  --surface-tertiary: #475569;
+  --text-primary: #F8FAFC;
+  --text-secondary: #CBD5E1;
+  --text-muted: #64748B;
+  --border: #334155;
+  --border-color: #334155;
+  --border-focus: #FFC107;
+  
+  --primary: #FFC107;
+  --primary-hover: #FFD54F;
+  --primary-light: rgba(255, 193, 7, 0.15);
+  --primary-contrast: #0F172A;
+  
+  --success: #34D399;
+  --success-light: rgba(52, 211, 153, 0.15);
+  --warning: #FBBF24;
+  --warning-light: rgba(251, 191, 36, 0.15);
+  --danger: #F87171;
+  --danger-light: rgba(248, 113, 113, 0.15);
+  --info: #60A5FA;
+  --info-light: rgba(96, 165, 250, 0.15);
+  --disabled: #475569;
+  --overlay: rgba(0, 0, 0, 0.75);
+  
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+}
+
+/* Global Reset & Container */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  background-color: var(--app-background);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  font-size: 15px;
+  line-height: 1.5;
+  overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+.mobile-app-wrapper {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background-color: var(--app-background);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+/* Common UI Elements */
+.btn-primary {
+  width: 100%;
+  background-color: var(--primary);
+  color: var(--primary-contrast);
+  border: none;
+  padding: 14px 20px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  
+  &:active {
+    transform: scale(0.98);
+  }
+  
+  &:disabled {
+    background-color: var(--disabled);
+    color: var(--text-muted);
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+.btn-secondary {
+  width: 100%;
+  background-color: var(--surface-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  padding: 14px 20px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.form-control {
+  width: 100%;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 14px 16px;
+  font-size: 15px;
+  border-radius: var(--radius-md);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  
+  &:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.25);
+  }
+  
+  &::placeholder {
+    color: var(--text-muted);
+  }
+}
+
+.card {
+  background-color: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 16px;
+}

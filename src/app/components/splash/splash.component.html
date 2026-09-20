@@ -1,0 +1,166 @@
+<!-- Mode 1: Initial Loading Splash Screen -->
+<div *ngIf="currentMode === 'loading'" class="splash-loading-screen">
+  <div class="watermark-bg"></div>
+  
+  <div class="loading-content">
+    <div class="logo-box">
+      <svg class="rentron-r-icon" viewBox="0 0 64 64" fill="none">
+        <rect width="64" height="64" rx="16" fill="#1C1C1E"/>
+        <path d="M22 16H36C41.5228 16 46 20.4772 46 26C46 30.2 43.4 33.8 39.7 35.2L47 48H38L31.5 36H28V48H22V16ZM28 22V30H36C38.2091 30 40 28.2091 40 26C40 23.7909 38.2091 22 36 22H28Z" fill="#FFC107"/>
+        <path d="M42 22L47 16" stroke="#FFC107" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <h1 class="brand-title">Rentron</h1>
+    <p class="brand-subtitle">— CUSTOMER APP —</p>
+
+    <div class="spinner-container">
+      <div class="yellow-spinner"></div>
+      <span class="loading-text">Initializing Data...</span>
+    </div>
+
+    <div class="splash-footer">
+      <p class="version">v2.4.1 (Build 492)</p>
+      <p class="copyright">©2026 Rentron Heavy Machinery</p>
+    </div>
+  </div>
+</div>
+
+<!-- Mode 2: Tutorial Carousel (Slides 1, 2, 3) -->
+<div *ngIf="currentMode === 'tutorial'" class="splash-tutorial-screen" [style.background]="slides[currentSlide].bgColor">
+  <div class="illustration-area">
+    <!-- Slide 1 Illustration: JCB Excavator -->
+    <div *ngIf="currentSlide === 0" class="slide-illustration jcb-art">
+      <div class="illustration-card">
+        <svg viewBox="0 0 320 200" fill="none" class="art-svg">
+          <!-- Sky / Background -->
+          <rect width="320" height="200" fill="#EBD9C8" rx="16"/>
+          <path d="M20 180 L80 120 L140 180 L200 130 L300 180" stroke="#D8C0AC" stroke-width="4"/>
+          <!-- Crane / Digger SVG graphics -->
+          <rect x="40" y="140" width="120" height="35" rx="8" fill="#1C1C1E"/>
+          <circle cx="60" cy="170" r="10" fill="#555"/>
+          <circle cx="95" cy="170" r="10" fill="#555"/>
+          <circle cx="130" cy="170" r="10" fill="#555"/>
+          <!-- Body -->
+          <path d="M60 140 L130 140 L120 90 L80 90 Z" fill="#FFC107"/>
+          <rect x="85" y="95" width="25" height="25" rx="3" fill="#1C1C1E"/>
+          <text x="92" y="112" fill="#FFC107" font-weight="bold" font-size="10">JCB</text>
+          <!-- Arm -->
+          <path d="M120 110 L180 60 L240 120 L270 140" stroke="#1C1C1E" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M120 110 L180 60 L240 120 L270 140" stroke="#FFC107" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M270 140 L285 155 L260 165 Z" fill="#1C1C1E"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Slide 2 Illustration: Taxi / Booking -->
+    <div *ngIf="currentSlide === 1" class="slide-illustration taxi-art">
+      <div class="illustration-card">
+        <svg viewBox="0 0 320 200" fill="none" class="art-svg">
+          <rect width="320" height="200" fill="#FFF9E6" rx="16"/>
+          <!-- Map pin & City -->
+          <path d="M60 40 C60 25 80 25 80 40 C80 60 70 70 70 70 C70 70 60 60 60 40 Z" fill="#FFC107"/>
+          <circle cx="70" cy="40" r="5" fill="#1C1C1E"/>
+          <!-- Yellow Car -->
+          <rect x="30" y="120" width="160" height="40" rx="10" fill="#FFC107"/>
+          <path d="M60 120 L80 85 L140 85 L160 120 Z" fill="#FFC107"/>
+          <rect x="85" y="90" width="22" height="25" fill="#1C1C1E"/>
+          <rect x="112" y="90" width="22" height="25" fill="#1C1C1E"/>
+          <circle cx="65" cy="160" r="14" fill="#1C1C1E"/>
+          <circle cx="65" cy="160" r="6" fill="#DDD"/>
+          <circle cx="155" cy="160" r="14" fill="#1C1C1E"/>
+          <circle cx="155" cy="160" r="6" fill="#DDD"/>
+          <!-- Person holding phone -->
+          <circle cx="230" cy="90" r="12" fill="#D2996E"/>
+          <path d="M230 78 C225 78 220 85 220 90 L240 90 Z" fill="#1C1C1E"/>
+          <rect x="215" y="105" width="30" height="60" rx="8" fill="#FFC107"/>
+          <rect x="200" y="115" width="10" height="25" rx="3" fill="#1C1C1E"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Slide 3 Illustration: Scooter Ride -->
+    <div *ngIf="currentSlide === 2" class="slide-illustration scooter-art">
+      <div class="illustration-card">
+        <svg viewBox="0 0 320 200" fill="none" class="art-svg">
+          <rect width="320" height="200" fill="#F0F4F8" rx="16"/>
+          <!-- Scooter -->
+          <path d="M80 150 L120 150 L170 120 L220 130 L240 150" stroke="#1D2A44" stroke-width="8" stroke-linecap="round"/>
+          <circle cx="90" cy="155" r="18" fill="#1C1C1E"/>
+          <circle cx="90" cy="155" r="8" fill="#DDD"/>
+          <circle cx="230" cy="155" r="18" fill="#1C1C1E"/>
+          <circle cx="230" cy="155" r="8" fill="#DDD"/>
+          <!-- Scooter Body -->
+          <path d="M120 120 L190 120 L210 145 L110 145 Z" fill="#FFC107"/>
+          <!-- Riders -->
+          <circle cx="150" cy="80" r="12" fill="#D2996E"/>
+          <path d="M138 68 A14 14 0 0 1 162 68 Z" fill="#1D2A44"/> <!-- Helmet -->
+          <rect x="135" y="95" width="30" height="40" rx="6" fill="#FF6B00"/>
+          
+          <circle cx="180" cy="75" r="11" fill="#D2996E"/>
+          <path d="M169 64 A13 13 0 0 1 191 64 Z" fill="#FFC107"/> <!-- Yellow helmet -->
+          <rect x="168" y="88" width="25" height="40" rx="6" fill="#1D2A44"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tutorial Text Content -->
+  <div class="tutorial-text-content">
+    <h2>{{ slides[currentSlide].title }}</h2>
+    <p>{{ slides[currentSlide].subtitle }}</p>
+
+    <!-- Pagination Dots & Buttons -->
+    <div class="tutorial-navigation">
+      <button *ngIf="currentSlide < 2" class="skip-btn" (click)="goToWelcome()">Skip</button>
+      <div *ngIf="currentSlide === 2" class="placeholder-spacer"></div>
+
+      <div class="dots-container">
+        <span *ngFor="let slide of slides; let i = index" 
+              class="dot" 
+              [class.active]="i === currentSlide"
+              (click)="currentSlide = i"></span>
+      </div>
+
+      <button *ngIf="currentSlide < 2" class="next-btn" (click)="nextSlide()">
+        Next <span>➔</span>
+      </button>
+
+      <button *ngIf="currentSlide === 2" class="get-started-btn" (click)="goToWelcome()">
+        Get Started
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Mode 3: Welcome / Sign Up Screen -->
+<div *ngIf="currentMode === 'welcome'" class="splash-welcome-screen">
+  <div class="status-bar">
+    <span>07:02</span>
+    <div class="status-icons">
+      <span>📶</span>
+      <span>🛜</span>
+      <span>🔋</span>
+    </div>
+  </div>
+
+  <div class="welcome-center">
+    <div class="welcome-logo-box">
+      <svg class="welcome-r-icon" viewBox="0 0 64 64" fill="none">
+        <rect width="64" height="64" rx="16" fill="#1C1C1E"/>
+        <path d="M22 16H36C41.5228 16 46 20.4772 46 26C46 30.2 43.4 33.8 39.7 35.2L47 48H38L31.5 36H28V48H22V16ZM28 22V30H36C38.2091 30 40 28.2091 40 26C40 23.7909 38.2091 22 36 22H28Z" fill="#FFC107"/>
+        <path d="M42 22L47 16" stroke="#FFC107" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <h1 class="welcome-title">Rentron</h1>
+    <p class="our-app">— OUR APP —</p>
+
+    <div class="welcome-copy">
+      <h2>Welcome to Rentron</h2>
+      <p>Book machines, rides, and more—all in one place.</p>
+    </div>
+
+    <button class="primary-login-btn" (click)="navigateToLogin()">
+      Log in / Sign up <span class="arrow">➔</span>
+    </button>
+  </div>
+</div>

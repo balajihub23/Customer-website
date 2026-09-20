@@ -1,0 +1,30 @@
+<div class="logout-overlay" *ngIf="isOpen" (click)="handleCancel()">
+  <div class="logout-card" (click)="$event.stopPropagation()">
+    
+    <!-- Red Badge Icon -->
+    <div class="icon-circle">
+      <svg class="logout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+        <polyline points="16 17 21 12 16 7"></polyline>
+        <line x1="21" y1="12" x2="9" y2="12"></line>
+      </svg>
+    </div>
+
+    <!-- Title & Description -->
+    <h3 class="logout-title">Logout?</h3>
+    <p class="logout-description">
+      Are you sure you want to log out of your account? You will need to re-enter your credentials to access.
+    </p>
+
+    <!-- Action Buttons -->
+    <div class="logout-actions">
+      <button type="button" class="btn-logout-submit" (click)="handleConfirm()">
+        Logout
+      </button>
+      <button type="button" class="btn-logout-cancel" (click)="handleCancel()">
+        Cancel
+      </button>
+    </div>
+
+  </div>
+</div>

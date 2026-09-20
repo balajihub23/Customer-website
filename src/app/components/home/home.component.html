@@ -1,0 +1,207 @@
+<div class="home-container">
+  <!-- Top App Header -->
+  <app-customer-header 
+    [currentLocation]="selectedLocation" 
+    [userName]="userName"
+    (onLocationClick)="openLocationModal()">
+  </app-customer-header>
+
+  <!-- Category Selection Cards (Construction vs Ride) -->
+  <div class="category-cards-grid">
+    <!-- Construction Card -->
+    <div class="category-card" [class.active]="activeTab === 'construction'" (click)="activeTab = 'construction'">
+      <div class="card-header">
+        <span class="category-tag">Construction</span>
+        <span class="category-badge">EQUIPMENT Rental</span>
+      </div>
+      <p class="category-subtitle">JCB • Excavator • Crane • Roller</p>
+      <button class="action-yellow-btn" (click)="activeTab = 'construction'">
+        Book Machinery ➔
+      </button>
+    </div>
+
+    <!-- Ride Card -->
+    <div class="category-card" [class.active]="activeTab === 'ride'" (click)="activeTab = 'ride'">
+      <div class="card-header">
+        <span class="category-tag">Ride</span>
+        <span class="category-badge">Instant Transport pick-up</span>
+      </div>
+      <p class="category-subtitle">Taxi • Silver Taxi • Auto • Bike</p>
+      <button class="action-yellow-btn" (click)="activeTab = 'ride'">
+        Book Ride ➔
+      </button>
+    </div>
+  </div>
+
+  <!-- Quick Selection Grid -->
+  <div class="quick-grid-section">
+    <div class="section-title">
+      <h3>Available {{ activeTab === 'construction' ? 'Machinery & Equipment' : 'Rides & Transport' }}</h3>
+    </div>
+
+    <div class="grid-items" *ngIf="activeTab === 'construction'">
+      <div *ngFor="let item of machineryCategories" class="item-card" (click)="selectMachinery(item.id)">
+        <div class="item-icon">{{ item.icon }}</div>
+        <div class="item-info">
+          <h4>{{ item.name }}</h4>
+          <span class="rate">{{ item.rate }}</span>
+        </div>
+        <button class="select-btn">Select ➔</button>
+      </div>
+    </div>
+
+    <div class="grid-items" *ngIf="activeTab === 'ride'">
+      <div *ngFor="let item of rideCategories" class="item-card" (click)="selectRide(item.id)">
+        <div class="item-icon">{{ item.icon }}</div>
+        <div class="item-info">
+          <h4>{{ item.name }}</h4>
+          <span class="rate">{{ item.rate }}</span>
+        </div>
+        <button class="select-btn">Select ➔</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation Bar -->
+  <app-bottom-nav activeTab="HOME"></app-bottom-nav>
+
+  <!-- Work Site Location Modal / Sheet (Matches Figma Screenshots 1 & 2) -->
+  <div *ngIf="showLocationModal" class="location-modal-overlay">
+    
+    <!-- STEP 1: Enter Work Site Location View (Figma Screen 2) -->
+    <div *ngIf="locationStep === 'search'" class="location-search-full-screen animate-fade-in">
+      <header class="location-search-header">
+        <button class="btn-back" (click)="showLocationModal = false">←</button>
+        <h2>Enter Work Site Location</h2>
+        <span class="spacer"></span>
+      </header>
+
+      <div class="search-input-wrapper">
+        <span class="search-icon">🔍</span>
+        <input 
+          type="text" 
+          [(ngModel)]="searchQuery" 
+          (input)="filterSearch()"
+          placeholder="Enter Address" 
+          class="search-input"
+        />
+        <button *ngIf="searchQuery" class="clear-btn" (click)="clearSearch()">⊗</button>
+      </div>
+
+      <!-- Current Location Option -->
+      <div class="current-location-option" (click)="useCurrentGPSLocation()">
+        <span class="target-gps-icon">🎯</span>
+        <span class="option-text">Current Location</span>
+      </div>
+
+      <!-- Recent Search History Title -->
+      <div class="recent-header-row" *ngIf="recentLocations.length > 0">
+        <span class="recent-label">RECENT SEARCHES</span>
+      </div>
+
+      <!-- Dynamic Recent Locations List (No Hardcoding) -->
+      <div class="suggestions-list" *ngIf="filteredSuggestions.length > 0">
+        @for (item of filteredSuggestions; track item.name; let i = $index) {
+          <div class="suggestion-item" (click)="selectLocationSuggestion(item)">
+            <div class="sugg-left">
+              <span class="history-clock-icon">🕒</span>
+              <div class="sugg-text">
+                <strong class="sugg-title">{{ item.name }}</strong>
+                <p class="sugg-subtitle" *ngIf="item.details">{{ item.details }}</p>
+              </div>
+            </div>
+            <div class="sugg-actions">
+              <button class="map-link-btn" (click)="$event.stopPropagation(); selectLocationSuggestion(item)">MAP</button>
+              <button class="delete-recent-btn" (click)="removeRecentLocation(i, $event)" title="Remove from recent searches">⊗</button>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Empty State when no recent search history exists -->
+      <div class="no-recent-box" *ngIf="filteredSuggestions.length === 0">
+        <span class="empty-icon">📍</span>
+        <p>No recent search history yet.</p>
+        <span class="empty-sub">Search an address or choose Current Location to set your work site.</span>
+      </div>
+    </div>
+
+    <!-- STEP 2: Interactive Leaflet Map View & Change Location Sheet -->
+    <div *ngIf="locationStep === 'adjust_map' || locationStep === 'confirm_details'" class="map-sheet-container animate-fade-in">
+      <button class="close-sheet-btn" (click)="showLocationModal = false">✕</button>
+
+      <!-- Real Interactive Leaflet Map Container -->
+      <div class="map-view-wrapper">
+        <div id="homeMapContainer" class="home-leaflet-map"></div>
+
+        <!-- Center Pin Pointer (Stays centered while map moves) -->
+        <div class="center-pin-container">
+          <div class="pin-marker">📍</div>
+          <div class="pin-shadow"></div>
+        </div>
+
+        <!-- Recenter GPS Button -->
+        <button class="recenter-gps-btn" (click)="recenterMap()" title="Recenter Map">🎯</button>
+      </div>
+
+      <!-- Location Bottom Sheet -->
+      <div class="location-bottom-sheet">
+        <div class="sheet-handle"></div>
+
+        <div *ngIf="locationStep === 'adjust_map'">
+          <!-- Top Location Bar with CHANGE button -->
+          <div class="sheet-search-bar">
+            <span class="search-icon">🔍</span>
+            <div class="location-text-box">
+              <strong class="loc-title">{{ workSiteDetails.address }}</strong>
+              <p class="loc-sub">{{ searchQuery || 'Drag map to change location pointer' }}</p>
+            </div>
+            <button class="change-location-btn" (click)="locationStep = 'search'">Change</button>
+          </div>
+
+          <button class="primary-yellow-btn" (click)="locationStep = 'confirm_details'">
+            Confirm Location ➔
+          </button>
+        </div>
+
+        <div *ngIf="locationStep === 'confirm_details'" class="confirm-details-form">
+          <h3>Confirm Work Site Details</h3>
+          
+          <div class="form-group">
+            <label>Work Location</label>
+            <input type="text" [(ngModel)]="workSiteDetails.address" class="form-input" />
+          </div>
+
+          <div class="form-group">
+            <label>Complete Address / Building / Premises *</label>
+            <input type="text" [(ngModel)]="workSiteDetails.completeAddress" placeholder="Plot 42, Phase 2 Industrial Park" class="form-input" />
+          </div>
+
+          <div class="form-group">
+            <label>Nearby Landmark *</label>
+            <input type="text" [(ngModel)]="workSiteDetails.landmark" placeholder="Opposite Metro Pillar 184" class="form-input" />
+          </div>
+
+          <div class="form-group">
+            <label>Site Contact Number</label>
+            <input type="tel" [(ngModel)]="workSiteDetails.contactNumber" class="form-input" />
+          </div>
+
+          <div class="form-group">
+            <label>Save Address As</label>
+            <div class="address-tags">
+              <span class="tag-pill" [class.selected]="workSiteDetails.tag === 'Home'" (click)="workSiteDetails.tag = 'Home'">🏠 Home</span>
+              <span class="tag-pill" [class.selected]="workSiteDetails.tag === 'Office'" (click)="workSiteDetails.tag = 'Office'">🏢 Office</span>
+              <span class="tag-pill" [class.selected]="workSiteDetails.tag === 'Site'" (click)="workSiteDetails.tag = 'Site'">🏗️ Site</span>
+            </div>
+          </div>
+
+          <button class="primary-yellow-btn" (click)="confirmLocationAndContinue()">
+            Confirm Work Site & Continue ➔
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

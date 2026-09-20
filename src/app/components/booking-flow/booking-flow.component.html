@@ -1,0 +1,330 @@
+<div class="booking-flow-container">
+  <!-- Step 1: Select Machinery & Equipment (Matches Figma Image 4) -->
+  <div *ngIf="currentStep === 'machinery'" class="flow-step machinery-step">
+    <div class="step-header">
+      <button class="back-btn" (click)="goHome()">➔</button>
+      <h2>Select Machinery</h2>
+    </div>
+
+    <div class="machinery-list">
+      <div 
+        *ngFor="let item of machineryList" 
+        class="machinery-card"
+        [class.selected]="selectedMachinery?.id === item.id"
+        (click)="selectMachinery(item)">
+        
+        <div class="card-left">
+          <div class="machine-avatar">{{ item.image }}</div>
+          <div class="machine-details">
+            <h3>{{ item.name }}</h3>
+            <span class="category-badge">{{ item.category }}</span>
+            <p class="specs">{{ item.specs }}</p>
+          </div>
+        </div>
+
+        <div class="card-right">
+          <span class="hourly-rate">₹{{ item.hourlyRate }}/hr</span>
+          <span class="daily-rate">₹{{ item.dailyRate }}/day</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2: Attachments & Gear Selection -->
+  <div *ngIf="currentStep === 'attachments'" class="flow-step attachments-step">
+    <div class="step-header">
+      <button class="back-btn" (click)="currentStep = 'machinery'">➔</button>
+      <h2>Attachments & Gear</h2>
+    </div>
+
+    <div class="selected-machine-summary" *ngIf="selectedMachinery">
+      <span class="icon">{{ selectedMachinery.image }}</span>
+      <div>
+        <h3>{{ selectedMachinery.name }}</h3>
+        <p>Base Package includes standard bucket</p>
+      </div>
+    </div>
+
+    <div class="attachments-list">
+      <div 
+        class="attachment-card" 
+        [class.active]="selectedAttachments.includes('trench')"
+        (click)="toggleAttachment('trench')">
+        <div class="check-box"></div>
+        <div class="att-info">
+          <h4>Heavy Duty Trenching Bucket</h4>
+          <p>Narrow bucket tailored for deep utility & pipeline trenching work.</p>
+        </div>
+        <span class="extra-cost">+₹500 / day</span>
+      </div>
+
+      <div 
+        class="attachment-card" 
+        [class.active]="selectedAttachments.includes('breaker')"
+        (click)="toggleAttachment('breaker')">
+        <div class="check-box"></div>
+        <div class="att-info">
+          <h4>Hydraulic Rock Breaker</h4>
+          <p>High frequency demolition breaker for concrete slab & rock excavation.</p>
+        </div>
+        <span class="extra-cost">+₹1,200 / day</span>
+      </div>
+
+      <div 
+        class="attachment-card" 
+        [class.active]="selectedAttachments.includes('floodlight')"
+        (click)="toggleAttachment('floodlight')">
+        <div class="check-box"></div>
+        <div class="att-info">
+          <h4>Auxiliary Night Work Floodlights</h4>
+          <p>Dual 150W floodlight LEDs mounted for 24/7 site operations.</p>
+        </div>
+        <span class="extra-cost">+₹300 / day</span>
+      </div>
+    </div>
+
+    <div class="bottom-action-bar">
+      <button class="secondary-btn" (click)="goToSchedule()">Skip</button>
+      <button class="primary-yellow-btn" (click)="goToSchedule()">Continue ➔</button>
+    </div>
+  </div>
+
+  <!-- Step 3: Date & Time Picker Modal (Matches Figma Image 4) -->
+  <div *ngIf="currentStep === 'schedule'" class="flow-step schedule-step">
+    <div class="step-header">
+      <button class="back-btn" (click)="currentStep = 'attachments'">➔</button>
+      <h2>Work Details</h2>
+    </div>
+
+    <div class="calendar-card">
+      <div class="month-selector">
+        <h3>{{ selectedMonth }}</h3>
+        <div class="arrows">
+          <span>◀</span>
+          <span>▶</span>
+        </div>
+      </div>
+
+      <div class="days-scroll">
+        <div 
+          *ngFor="let day of days" 
+          class="day-pill" 
+          [class.active]="day.active"
+          (click)="selectDay(day.dayNum)">
+          <span class="day-name">{{ day.dayName }}</span>
+          <span class="day-num">{{ day.dayNum }}</span>
+        </div>
+      </div>
+
+      <div class="time-picker-row">
+        <label>Preferred Start Time</label>
+        <div class="time-input-box">
+          <input type="text" [(ngModel)]="selectedTime" />
+          <span class="clock-icon">🕒</span>
+        </div>
+      </div>
+    </div>
+
+    <button class="primary-yellow-btn confirm-btn" (click)="goToDuration()">Continue ➔</button>
+  </div>
+
+  <!-- Step 4: Duration & Pricing Breakdown Modal (Matches Figma Image 5) -->
+  <div *ngIf="currentStep === 'duration'" class="flow-step duration-step">
+    <div class="step-header">
+      <button class="back-btn" (click)="currentStep = 'schedule'">➔</button>
+      <h2>Duration and Pricing</h2>
+    </div>
+
+    <div class="duration-cards">
+      <div 
+        *ngFor="let dur of durations" 
+        class="duration-card" 
+        [class.active]="dur.active"
+        (click)="selectDurationOption(dur)">
+        
+        <div class="dur-left">
+          <h4>{{ dur.label }}</h4>
+          <p>{{ dur.subtitle }}</p>
+        </div>
+
+        <div class="dur-right">
+          <span *ngIf="dur.badge" class="discount-badge">{{ dur.badge }}</span>
+          <span class="dur-price">₹{{ dur.price | number }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transparent Cost Breakdown Card -->
+    <div class="cost-breakdown-card">
+      <h3>Transparent Cost Breakdown</h3>
+
+      <div class="cost-row">
+        <span>Equipment Rental ({{ selectedDuration.label }})</span>
+        <span>₹{{ equipmentRate | number }}</span>
+      </div>
+
+      <div class="cost-row">
+        <span>GST (18%)</span>
+        <span>₹{{ gstRate | number }}</span>
+      </div>
+
+      <div class="cost-row">
+        <span>Transport / Delivery</span>
+        <span>₹{{ transportFee | number }}</span>
+      </div>
+
+      <hr class="cost-divider" />
+
+      <div class="cost-row total-row">
+        <span>Total Estimated Cost</span>
+        <span class="total-price">₹{{ totalAmount | number }}</span>
+      </div>
+    </div>
+
+    <button class="primary-yellow-btn" (click)="startOperatorSearch()">
+      Find Available Operators ➔
+    </button>
+  </div>
+
+  <!-- Step 5: Operator Search Radar Screen (Matches Figma Image 5) -->
+  <div *ngIf="currentStep === 'radar_search'" class="flow-step radar-step">
+    <button class="back-btn" (click)="currentStep = 'duration'">➔</button>
+
+    <div class="radar-container">
+      <div class="radar-rings">
+        <div class="ring ring-1"></div>
+        <div class="ring ring-2"></div>
+        <div class="ring ring-3"></div>
+        <div class="radar-sweep"></div>
+        <div class="center-icon">🚜</div>
+      </div>
+
+      <h2 *ngIf="!operatorFound" class="radar-status">Finding Available Operators...</h2>
+      <p *ngIf="!operatorFound" class="radar-sub">Searching verified operator nearby for your job request</p>
+
+      <h2 *ngIf="operatorFound" class="radar-status text-success">Operator Found!</h2>
+
+      <!-- Found Operator Card -->
+      <div *ngIf="operatorFound" class="operator-found-card">
+        <div class="op-avatar">👨‍🌾</div>
+        <div class="op-info">
+          <h3>{{ foundOperatorData.name }} <span class="rating">⭐ {{ foundOperatorData.rating }}</span></h3>
+          <p>{{ foundOperatorData.machine }} • ETA {{ foundOperatorData.eta }}</p>
+        </div>
+        <a [href]="'tel:' + foundOperatorData.phone" class="phone-call-btn">📞</a>
+      </div>
+
+      <button *ngIf="operatorFound" class="primary-yellow-btn confirm-op-btn" (click)="goToPayment()">
+        Proceed to Book ➔
+      </button>
+
+      <button *ngIf="!operatorFound" class="secondary-btn cancel-search-btn" (click)="currentStep = 'duration'">
+        Cancel Request
+      </button>
+    </div>
+  </div>
+
+  <!-- Step 6: 30% Advance Payment Screen (Matches Figma Image 5) -->
+  <div *ngIf="currentStep === 'payment_advance'" class="flow-step payment-step">
+    <div class="step-header">
+      <button class="back-btn" (click)="currentStep = 'radar_search'">➔</button>
+      <h2>Job Details</h2>
+    </div>
+
+    <div class="job-card">
+      <div class="site-tag">PRO-2024</div>
+      <h3>Metro Construction Site</h3>
+      
+      <div class="operator-confirmed-badge">
+        <span>✅ Operator Confirmed</span>
+        <p>Contact operator to discuss job details for dispatch.</p>
+      </div>
+
+      <div class="op-brief-row">
+        <span class="avatar">👨‍🌾</span>
+        <div>
+          <strong>Arun Kumar</strong>
+          <p>Verified Operator ⭐ 4.8</p>
+        </div>
+        <span class="machine-tag">JCB 3DX</span>
+      </div>
+
+      <div class="price-breakdown">
+        <h4>Price Breakdown</h4>
+        <div class="p-row">
+          <span>Equipment Charges</span>
+          <span>₹{{ equipmentRate | number }}</span>
+        </div>
+        <div class="p-row">
+          <span>Transport Fee</span>
+          <span>₹{{ transportFee | number }}</span>
+        </div>
+        <div class="p-row total">
+          <span>Total Job Amount</span>
+          <span>₹{{ totalAmount | number }}</span>
+        </div>
+
+        <div class="advance-highlight-box">
+          <div class="adv-left">
+            <strong>Pay 30% Advance</strong>
+            <p>Required to confirm your booking</p>
+          </div>
+          <span class="adv-price">₹{{ advanceAmount | number }}</span>
+        </div>
+      </div>
+
+      <div class="payment-methods">
+        <h4>Select Payment Method</h4>
+        
+        <div class="method-option" [class.selected]="paymentMethod === 'upi'" (click)="paymentMethod = 'upi'">
+          <span class="method-icon">📲</span>
+          <span>UPI (Google Pay, PhonePe, Paytm)</span>
+          <span class="radio-dot"></span>
+        </div>
+
+        <div class="method-option" [class.selected]="paymentMethod === 'card'" (click)="paymentMethod = 'card'">
+          <span class="method-icon">💳</span>
+          <span>Credit / Debit Card</span>
+          <span class="radio-dot"></span>
+        </div>
+
+        <div class="method-option" [class.selected]="paymentMethod === 'netbanking'" (click)="paymentMethod = 'netbanking'">
+          <span class="method-icon">🏦</span>
+          <span>Net Banking</span>
+          <span class="radio-dot"></span>
+        </div>
+      </div>
+    </div>
+
+    <button class="primary-yellow-btn pay-btn" (click)="confirmAndPay()">
+      Pay ₹{{ advanceAmount | number }} & Confirm Booking ➔
+    </button>
+  </div>
+
+  <!-- Step 7: Booking Confirmed & Scheduled Screen (Matches Figma Image 5) -->
+  <div *ngIf="currentStep === 'confirmed'" class="flow-step confirmed-step">
+    <div class="success-center">
+      <div class="big-green-check">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+
+      <h2>Confirmed & Scheduled</h2>
+      <p>Your 30% advance payment was received. Selected operator & machine are reserved for your site schedule.</p>
+
+      <div class="job-id-pill">JOB ID #RENT-2026-9841</div>
+
+      <button class="primary-yellow-btn" (click)="goHome()">
+        View Job Details ➔
+      </button>
+
+      <button class="secondary-link-btn" (click)="goHome()">
+        Back to Home
+      </button>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation Bar -->
+  <app-bottom-nav activeTab="BOOKINGS"></app-bottom-nav>
+</div>

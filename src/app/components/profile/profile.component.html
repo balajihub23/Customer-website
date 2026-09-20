@@ -1,0 +1,511 @@
+<div class="mobile-app-wrapper">
+
+  <!-- ==================== VIEW 1: MAIN PROFILE (Exact Replica of Screenshot 2) ==================== -->
+  <div *ngIf="currentView === 'MAIN'">
+    <header class="profile-header">
+      <h2>Profile</h2>
+    </header>
+
+    <main class="profile-content animate-fade-in">
+      <!-- Dark Hero Card -->
+      <div class="profile-hero-card">
+        <div class="hero-top">
+          <div class="avatar-wrapper">
+            <div class="initials-avatar">{{ (customerProfile.fullName || 'HE').substring(0, 2).toUpperCase() }}</div>
+          </div>
+          <div class="hero-info">
+            <h3 class="driver-name">{{ customerProfile.fullName || 'hello' }}</h3>
+            <p class="driver-role">Customer Account</p>
+            <p class="driver-phone">+91 {{ customerProfile.phone || '7656412300' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: ACCOUNT -->
+      <div class="menu-section">
+        <h4 class="section-heading">ACCOUNT</h4>
+        <div class="menu-group">
+          <div class="menu-item" (click)="navigateTo('PERSONAL_INFO')">
+            <div class="menu-left">
+              <span class="m-icon icon-user">👤</span>
+              <span class="m-title">Personal Information</span>
+            </div>
+            <span class="m-chevron">›</span>
+          </div>
+
+          <div class="menu-item" (click)="navigateTo('SAVED_ADDRESS')">
+            <div class="menu-left">
+              <span class="m-icon icon-doc">📍</span>
+              <span class="m-title">Saved Sites & Addresses</span>
+            </div>
+            <span class="m-chevron">›</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: PREFERENCES -->
+      <div class="menu-section">
+        <h4 class="section-heading">PREFERENCES</h4>
+        <div class="menu-group">
+          <div class="menu-item" (click)="onToggleNotifications()">
+            <div class="menu-left">
+              <span class="m-icon icon-bell">🔔</span>
+              <span class="m-title">Notifications</span>
+            </div>
+            <label class="toggle-switch" (click)="$event.stopPropagation()">
+              <input type="checkbox" [checked]="notificationsEnabled" (change)="onToggleNotifications()" />
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="menu-item" (click)="onToggleDarkMode()">
+            <div class="menu-left">
+              <span class="m-icon icon-moon">🌙</span>
+              <span class="m-title">Dark Mode</span>
+            </div>
+            <label class="toggle-switch" (click)="$event.stopPropagation()">
+              <input type="checkbox" [checked]="isDarkMode()" (change)="onToggleDarkMode()" />
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="menu-item" (click)="navigateTo('LANGUAGE')">
+            <div class="menu-left">
+              <span class="m-icon icon-globe">🌐</span>
+              <span class="m-title">Language</span>
+            </div>
+            <div class="menu-right-val">
+              <span class="val-text">{{ selectedLanguage }}</span>
+              <span class="m-chevron">›</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: SUPPORT -->
+      <div class="menu-section">
+        <h4 class="section-heading">SUPPORT</h4>
+        <div class="menu-group">
+          <div class="menu-item" (click)="navigateTo('SUPPORT')">
+            <div class="menu-left">
+              <span class="m-icon icon-support">🎧</span>
+              <span class="m-title">Support & Help Desk</span>
+            </div>
+            <span class="m-chevron">›</span>
+          </div>
+
+          <div class="menu-item" (click)="navigateTo('TERMS')">
+            <div class="menu-left">
+              <span class="m-icon icon-terms">📋</span>
+              <span class="m-title">Terms & Conditions</span>
+            </div>
+            <span class="m-chevron">›</span>
+          </div>
+
+          <div class="menu-item" (click)="navigateTo('PRIVACY')">
+            <div class="menu-left">
+              <span class="m-icon icon-privacy">🛡️</span>
+              <span class="m-title">Privacy Policy</span>
+            </div>
+            <span class="m-chevron">›</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Logout Button -->
+      <div class="action-section">
+        <button class="btn-logout" (click)="onLogout()">
+          <span class="icon-logout">↳]</span> Logout
+        </button>
+      </div>
+    </main>
+  </div>
+
+  <!-- ==================== VIEW 2: PERSONAL INFORMATION ==================== -->
+  <div *ngIf="currentView === 'PERSONAL_INFO'">
+    <header class="sub-header">
+      <button class="btn-back" (click)="navigateTo('MAIN')">‹</button>
+      <h2>Personal Information</h2>
+      <button class="btn-edit-icon" (click)="navigateTo('EDIT_PERSONAL_INFO')" title="Edit Profile">✏️</button>
+    </header>
+
+    <main class="profile-content animate-fade-in">
+      <div class="info-card">
+        <div class="info-field">
+          <span class="field-lbl">Full Name</span>
+          <span class="field-val strong">{{ customerProfile.fullName || 'hello' }}</span>
+        </div>
+        <div class="info-field">
+          <span class="field-lbl">Phone Number</span>
+          <div class="field-val-row">
+            <span class="field-val strong">+91 {{ customerProfile.phone || '7656412300' }}</span>
+            <span class="check-badge">✓</span>
+          </div>
+        </div>
+        <div class="info-field">
+          <span class="field-lbl">Email Address</span>
+          <span class="field-val">{{ customerProfile.email || 'customer@rentron.com' }}</span>
+        </div>
+        <div class="info-field">
+          <span class="field-lbl">City</span>
+          <span class="field-val">{{ customerProfile.city || 'Noida' }}</span>
+        </div>
+        <div class="info-field no-border">
+          <span class="field-lbl">Gender</span>
+          <span class="field-val">{{ customerProfile.gender || 'Male' }}</span>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- EDIT PERSONAL INFO -->
+  <div *ngIf="currentView === 'EDIT_PERSONAL_INFO'">
+    <header class="sub-header">
+      <button class="btn-back" (click)="navigateTo('PERSONAL_INFO')">‹</button>
+      <h2>Edit Personal Information</h2>
+      <span class="spacer"></span>
+    </header>
+
+    <main class="profile-content animate-fade-in">
+      <div class="form-card">
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input type="text" class="form-input" [(ngModel)]="editForm.fullName" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" class="form-input" [(ngModel)]="editForm.email" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">City</label>
+          <input type="text" class="form-input" [(ngModel)]="editForm.city" />
+        </div>
+
+        <button class="btn-primary-yellow" (click)="onSaveProfile()">Save Changes</button>
+      </div>
+    </main>
+  </div>
+
+  <!-- ==================== VIEW 3: SAVED SITES & ADDRESSES ==================== -->
+  <div *ngIf="currentView === 'SAVED_ADDRESS'">
+    <header class="sub-header">
+      <button class="btn-back" (click)="showAddAddressForm ? showAddAddressForm = false : navigateTo('MAIN')">‹</button>
+      <h2>{{ showAddAddressForm ? (editingSiteId ? 'Edit Site Address' : 'Add Site Address') : 'Saved Sites' }}</h2>
+      <span class="spacer"></span>
+    </header>
+
+    <!-- List View -->
+    <main class="profile-content animate-fade-in" *ngIf="!showAddAddressForm">
+      <div class="sites-list-container">
+        <div *ngFor="let site of savedSites" class="site-card" [class.default-active]="site.isDefault">
+
+          <div class="site-top-row">
+            <div class="tag-badge-group">
+              <span class="site-tag" *ngIf="site.tag">{{ site.tag }}</span>
+              <span class="default-pill" *ngIf="site.isDefault">Default Address</span>
+            </div>
+
+            <div class="site-actions-right">
+              <button class="edit-link-btn" (click)="openAddSiteForm(site)">Edit</button>
+              <div class="context-menu-wrapper">
+                <button class="more-dots-btn" (click)="toggleAddressMenu(site.id, $event)">•••</button>
+
+                <div class="popover-dropdown" *ngIf="activeAddressMenuId === site.id">
+                  <button (click)="promptRemoveSite(site)">
+                    <span>🗑️ Remove</span>
+                  </button>
+                  <button (click)="setSiteAsDefault(site)">
+                    <span>🔖 Set as Default</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <h3 class="site-nickname">{{ site.nickname }}</h3>
+          <p class="site-full-addr">{{ site.fullAddress }}</p>
+
+          <div class="site-meta-rows">
+            <p *ngIf="site.landmark" class="meta-item">
+              <span>📍 Near {{ site.landmark }}</span>
+            </p>
+            <p *ngIf="site.contactPhone" class="meta-item">
+              <span>📞 {{ site.contactPhone }} {{ site.contactName ? '(' + site.contactName + ')' : '' }}</span>
+            </p>
+          </div>
+        </div>
+
+        <button class="add-site-dashed-btn" (click)="openAddSiteForm()">
+          <span class="plus-icon">+</span>
+          <span>Add New Address</span>
+        </button>
+      </div>
+    </main>
+
+    <!-- Add / Edit Form View -->
+    <main class="profile-content animate-fade-in" *ngIf="showAddAddressForm">
+      <div class="form-card add-site-form-container">
+        <div class="form-group">
+          <label class="form-label">Address Nickname / Label *</label>
+          <input type="text" class="form-input" placeholder="e.g. Metro Expansion Site Gate 2"
+            [(ngModel)]="siteForm.nickname" />
+        </div>
+
+        <div class="form-group">
+          <div class="label-row">
+            <label class="form-label">Complete Address / Plot / Building *</label>
+            <span class="gps-badge">GPS Synced</span>
+          </div>
+          <textarea rows="3" class="form-input" placeholder="18021 N 50th St, Sector 18, Noida..."
+            [(ngModel)]="siteForm.fullAddress"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Landmark / Gate Instructions *</label>
+          <input type="text" class="form-input" placeholder="Opposite Metro Pillar 104, Behind Blue Warehouse"
+            [(ngModel)]="siteForm.landmark" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Site Contact Person Name</label>
+          <input type="text" class="form-input" placeholder="Ramesh Singh (Site Engineer)"
+            [(ngModel)]="siteForm.contactName" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Site Contact Phone Number *</label>
+          <input type="tel" class="form-input" placeholder="+91 98765 43210" [(ngModel)]="siteForm.contactPhone" />
+        </div>
+
+        <div class="checkbox-row">
+          <label class="custom-chk">
+            <input type="checkbox" [(ngModel)]="siteForm.isDefault" />
+            <span class="checkmark"></span>
+            <div>
+              <strong>Set as default work site</strong>
+              <p>Auto-selects this location when booking backhoes, boom lifts, and cranes.</p>
+            </div>
+          </label>
+        </div>
+
+        <button class="btn-primary-yellow" (click)="saveSiteAddress()">
+          Save Address
+        </button>
+      </div>
+    </main>
+  </div>
+
+  <!-- Remove Site Confirmation Modal -->
+  <div class="modal-backdrop" *ngIf="showRemoveConfirmModal" (click)="showRemoveConfirmModal = false">
+    <div class="confirm-card" (click)="$event.stopPropagation()">
+      <div class="icon-trash-red">🗑️</div>
+      <h3>Remove Saved Site?</h3>
+      <p>Are you sure you want to remove <strong>"{{ siteToRemove?.nickname }}"</strong> from your saved sites? This
+        action cannot be undone.</p>
+
+      <div class="modal-btns">
+        <button class="btn-danger-red" (click)="confirmRemoveSite()">YES, Remove</button>
+        <button class="btn-light-cancel" (click)="showRemoveConfirmModal = false">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== VIEW 4: SUPPORT & HELP DESK ==================== -->
+  <div *ngIf="currentView === 'SUPPORT'">
+    <header class="sub-header">
+      <button class="btn-back"
+        (click)="supportViewMode !== 'LIST' ? supportViewMode = 'LIST' : navigateTo('MAIN')">‹</button>
+      <h2>Support & Help Desk</h2>
+      <span class="spacer"></span>
+    </header>
+
+    <main class="profile-content animate-fade-in">
+      <a href="tel:+919876543210" class="emergency-call-banner">
+        <div class="phone-icon-circle">📞</div>
+        <div>
+          <strong>Need Immediate Assistance?</strong>
+          <p>Call Support Helpline (+91 98765 43210)</p>
+        </div>
+      </a>
+
+      <div class="sub-tabs-row" *ngIf="supportViewMode === 'LIST'">
+        <button [class.active]="supportSubTab === 'TICKETS'" (click)="supportSubTab = 'TICKETS'">My Support
+          Tickets</button>
+        <button [class.active]="supportSubTab === 'FAQ'" (click)="supportSubTab = 'FAQ'">FAQs & Guide</button>
+      </div>
+
+      <div *ngIf="supportViewMode === 'LIST' && supportSubTab === 'TICKETS'" class="tickets-container">
+        <button class="raise-ticket-btn" (click)="openRaiseTicketForm()">
+          <span>+ Raise New Support Ticket</span>
+        </button>
+
+        <div class="tickets-list">
+          <div *ngFor="let t of ticketsList" class="ticket-card" (click)="openTicketThread(t)">
+            <div class="t-head">
+              <span class="t-num">{{ t.ticketNumber }}</span>
+              <div class="t-badges">
+                <span class="p-badge" [ngClass]="t.priority.toLowerCase()">{{ t.priority }}</span>
+                <span class="s-badge" [ngClass]="t.status.toLowerCase()">{{ t.status }}</span>
+              </div>
+            </div>
+            <h4 class="t-subject">{{ t.subject }}</h4>
+            <p class="t-cat">{{ t.category }} • {{ t.createdAt }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="supportViewMode === 'RAISE_TICKET'" class="raise-ticket-container form-card">
+        <h3>Raise a Support Ticket</h3>
+
+        <div class="form-group">
+          <label class="form-label">Issue Category *</label>
+          <select [(ngModel)]="newTicketForm.category" class="form-input">
+            <option *ngFor="let c of categoryOptions" [value]="c">{{ c }}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Priority *</label>
+          <div class="priority-selector">
+            <button [class.active]="newTicketForm.priority === 'HIGH'"
+              (click)="newTicketForm.priority = 'HIGH'">High</button>
+            <button [class.active]="newTicketForm.priority === 'MEDIUM'"
+              (click)="newTicketForm.priority = 'MEDIUM'">Medium</button>
+            <button [class.active]="newTicketForm.priority === 'LOW'"
+              (click)="newTicketForm.priority = 'LOW'">Low</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Subject *</label>
+          <input type="text" class="form-input" placeholder="Brief summary of the issue"
+            [(ngModel)]="newTicketForm.subject" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Detailed Description *</label>
+          <textarea rows="4" class="form-input" placeholder="Describe what happened in detail..."
+            [(ngModel)]="newTicketForm.description"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Attach Screenshot / File (Optional)</label>
+          <input type="file" (change)="onTicketFileSelected($event)" class="file-input" />
+          <span *ngIf="newTicketForm.attachmentName" class="file-attached-name">📎 {{ newTicketForm.attachmentName
+            }}</span>
+        </div>
+
+        <button class="btn-primary-yellow" (click)="submitTicket()">
+          Submit Support Ticket
+        </button>
+      </div>
+
+      <div *ngIf="supportViewMode === 'CONFIRMATION'" class="ticket-confirm-container text-center">
+        <div class="green-circle-icon">✓</div>
+        <h2>Ticket Raised Successfully!</h2>
+        <p>Our help desk team will review your ticket and reply shortly.</p>
+        <button class="btn-primary-yellow" (click)="supportViewMode = 'LIST'">
+          Back to Support List
+        </button>
+      </div>
+
+      <div *ngIf="supportViewMode === 'CHAT_THREAD'" class="chat-thread-container">
+        <div class="chat-header-bar" *ngIf="selectedTicket">
+          <div>
+            <h4>{{ selectedTicket.ticketNumber }} - {{ selectedTicket.subject }}</h4>
+            <span class="s-badge" [ngClass]="selectedTicket.status.toLowerCase()">{{ selectedTicket.status }}</span>
+          </div>
+          <button *ngIf="selectedTicket.status === 'RESOLVED' || selectedTicket.status === 'CLOSED'" class="reopen-btn"
+            (click)="reopenSelectedTicket()">Reopen</button>
+        </div>
+
+        <div class="chat-messages-list" #chatContainer>
+          <div *ngFor="let m of chatMessages" class="chat-bubble" [class.customer]="m.senderRole === 'CUSTOMER'">
+            <div class="bubble-sender">{{ m.senderName || (m.senderRole === 'CUSTOMER' ? 'You' : 'Support Team') }}
+            </div>
+            <p class="bubble-text">{{ m.message }}</p>
+            <span *ngIf="m.attachmentName" class="bubble-file">📎 {{ m.attachmentName }}</span>
+            <span class="bubble-time">{{ m.createdAt }}</span>
+          </div>
+        </div>
+
+        <div class="chat-input-bar">
+          <input type="text" placeholder="Type message..." [(ngModel)]="newMessageText"
+            (keyup.enter)="sendChatMessage()" />
+          <button class="send-btn" (click)="sendChatMessage()">Send</button>
+        </div>
+      </div>
+
+      <div *ngIf="supportViewMode === 'LIST' && supportSubTab === 'FAQ'" class="faq-container">
+        <div class="search-box">
+          <input type="text" class="form-input" placeholder="Search FAQs..." [(ngModel)]="faqSearchQuery" />
+        </div>
+
+        <div class="faq-accordion-list">
+          <div *ngFor="let f of filteredFaqs" class="faq-item" [class.expanded]="f.expanded" (click)="toggleFaq(f.id)">
+            <div class="faq-question">
+              <span>{{ f.question }}</span>
+              <span class="accordion-arrow">{{ f.expanded ? '▲' : '▼' }}</span>
+            </div>
+            <div class="faq-answer" *ngIf="f.expanded">
+              <p>{{ f.answer }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ==================== VIEW 5: LANGUAGE ==================== -->
+  <div *ngIf="currentView === 'LANGUAGE'">
+    <header class="sub-header">
+      <button class="btn-back" (click)="navigateTo('MAIN')">‹</button>
+      <h2>Language</h2>
+      <span class="spacer"></span>
+    </header>
+
+    <main class="profile-content animate-fade-in">
+      <p class="lang-subtitle">Select your preferred language for the application interface.</p>
+
+      <div class="lang-radio-list">
+        <label *ngFor="let lang of languages" class="lang-radio-item" [class.selected]="selectedLanguage === lang.name"
+          (click)="selectedLanguage = lang.name">
+          <span class="lang-title">{{ lang.name }} ({{ lang.native }})</span>
+          <input type="radio" name="lang" [checked]="selectedLanguage === lang.name" />
+          <span class="radio-dot"></span>
+        </label>
+      </div>
+
+      <div class="fixed-bottom-bar" style="margin-top: 16px;">
+        <button class="btn-primary-yellow" (click)="onApplyLanguage()">Apply Selection</button>
+      </div>
+    </main>
+  </div>
+
+  <!-- ==================== VIEW 6 & 7: TERMS / PRIVACY ==================== -->
+  <div *ngIf="currentView === 'TERMS' || currentView === 'PRIVACY'">
+    <header class="sub-header">
+      <button class="btn-back" (click)="navigateTo('MAIN')">‹</button>
+      <h2>{{ currentView === 'TERMS' ? 'Terms & Conditions' : 'Privacy Policy' }}</h2>
+      <span class="spacer"></span>
+    </header>
+
+    <main class="profile-content animate-fade-in">
+      <div class="info-card policy-body">
+        <h3>Rentron Platform Rules</h3>
+        <p>By using the Rentron Application, you agree to follow safety rules, accurate site address entries, and
+          booking guidelines.</p>
+        <p>Your privacy and site data are protected securely.</p>
+      </div>
+    </main>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <app-bottom-nav activeTab="PROFILE"></app-bottom-nav>
+
+  <!-- Logout Modal -->
+  <app-logout-modal *ngIf="showLogoutModal" (cancel)="cancelLogout()" (confirm)="confirmLogout()">
+  </app-logout-modal>
+</div>
