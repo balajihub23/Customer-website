@@ -6,6 +6,19 @@
     (onLocationClick)="openLocationModal()">
   </app-customer-header>
 
+  <!-- Quick Services Category Pills (Daily Rides | Rentals | Outstation) -->
+  <div class="quick-service-pills-row">
+    <button class="service-pill-btn" (click)="openCategory('DAILY_RIDES')">
+      <span>🚖</span> Daily Rides
+    </button>
+    <button class="service-pill-btn" (click)="openCategory('RENTALS')">
+      <span>⏳</span> Rentals
+    </button>
+    <button class="service-pill-btn" (click)="openCategory('OUTSTATION')">
+      <span>🏔️</span> Outstation
+    </button>
+  </div>
+
   <!-- Category Selection Cards (Construction vs Ride) -->
   <div class="category-cards-grid">
     <!-- Construction Card -->
@@ -15,7 +28,7 @@
         <span class="category-badge">EQUIPMENT Rental</span>
       </div>
       <p class="category-subtitle">JCB • Excavator • Crane • Roller</p>
-      <button class="action-yellow-btn" (click)="activeTab = 'construction'">
+      <button class="action-yellow-btn" (click)="openCategory('EQUIPMENT')">
         Book Machinery ➔
       </button>
     </div>
@@ -26,8 +39,8 @@
         <span class="category-tag">Ride</span>
         <span class="category-badge">Instant Transport pick-up</span>
       </div>
-      <p class="category-subtitle">Taxi • Silver Taxi • Auto • Bike</p>
-      <button class="action-yellow-btn" (click)="activeTab = 'ride'">
+      <p class="category-subtitle">Outstation • Rentals • City Cabs</p>
+      <button class="action-yellow-btn" (click)="openCategory('OUTSTATION')">
         Book Ride ➔
       </button>
     </div>

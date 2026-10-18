@@ -81,6 +81,38 @@ export class HomeComponent implements OnInit, OnDestroy {
     });
 
     this.loadRecentLocations();
+    this.loadDynamicProducts();
+  }
+
+  loadDynamicProducts(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    this.bookingService.getActiveProducts().subscribe({
+      next: (res) => {
+        const products = res?.data || (Array.isArray(res) ? res : []);
+        if (products && products.length > 0) {
+          const mach = products.filter((p: any) => p.productType === 'HEAVY_EQUIPMENT' || p.productType === 'JCB');
+          if (mach.length > 0) {
+            this.machineryCategories = mach.map((p: any) => ({
+              id: p.code || String(p.id),
+              name: p.name,
+              icon: p.category === 'EXCAVATOR' || p.category === 'CRANE' ? '🏗️' : '🚜',
+              rate: '₹1,000/hr'
+            }));
+          }
+
+          const rides = products.filter((p: any) => p.productType === 'RIDE' || p.productType === 'CAR' || p.productType === 'AUTO' || p.productType === 'BIKE');
+          if (rides.length > 0) {
+            this.rideCategories = rides.map((p: any) => ({
+              id: p.code || String(p.id),
+              name: p.name,
+              icon: p.category === 'BIKE' ? '🛵' : (p.category === 'AUTO' ? '🛺' : '🚕'),
+              rate: p.category === 'BIKE' ? '₹8/km' : (p.category === 'AUTO' ? '₹12/km' : '₹15/km')
+            }));
+          }
+        }
+      }
+    });
   }
 
   loadRecentLocations(): void {
@@ -318,12 +350,16 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   selectMachinery(id: string): void {
     this.bookingService.setSelectedMachinery(id);
-    this.router.navigate(['/booking']);
+    this.router.navigate(['/booking'], { queryParams: { category: 'EQUIPMENT', machineryId: id } });
   }
 
   selectRide(id: string): void {
     this.bookingService.setSelectedMachinery(id);
-    this.router.navigate(['/booking']);
+    this.router.navigate(['/booking'], { queryParams: { category: 'DAILY_RIDES', rideId: id } });
+  }
+
+  openCategory(cat: string): void {
+    this.router.navigate(['/booking'], { queryParams: { category: cat } });
   }
 
   ngOnDestroy(): void {

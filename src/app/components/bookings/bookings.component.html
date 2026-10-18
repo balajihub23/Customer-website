@@ -1,467 +1,582 @@
-<div class="bookings-page">
-  <!-- Header -->
-  <header class="page-header">
-    <h1 class="header-title">Bookings</h1>
+<div class="bookings-viewport">
+
+  <!-- ========================================== -->
+  <!-- TOP HEADER & TABS -->
+  <!-- ========================================== -->
+  <header class="bookings-header">
+    <div class="header-top-row">
+      <h1 class="page-title">My Bookings</h1>
+      <button class="refresh-btn" (click)="fetchBookings()" title="Refresh Bookings">↻</button>
+    </div>
+
+    <!-- 3 Dynamic Category Tabs (Ongoing | Completed | Cancelled) -->
+    <div class="tabs-segmented-control">
+      <button 
+        class="tab-btn" 
+        [class.active]="activeTab === 'Ongoing'" 
+        (click)="setTab('Ongoing')">
+        Ongoing ({{ bookingsList.length > 0 ? (filteredBookings.length) : 0 }})
+      </button>
+
+      <button 
+        class="tab-btn" 
+        [class.active]="activeTab === 'Completed'" 
+        (click)="setTab('Completed')">
+        Completed
+      </button>
+
+      <button 
+        class="tab-btn" 
+        [class.active]="activeTab === 'Cancelled'" 
+        (click)="setTab('Cancelled')">
+        Cancelled
+      </button>
+    </div>
   </header>
 
-  <!-- Segmented Tabs -->
-  <div class="tabs-container">
-    <button 
-      class="tab-btn" 
-      [class.active]="activeTab === 'ONGOING'" 
-      (click)="setTab('ONGOING')">
-      Ongoing
-    </button>
-    <button 
-      class="tab-btn" 
-      [class.active]="activeTab === 'COMPLETED'" 
-      (click)="setTab('COMPLETED')">
-      Completed
-    </button>
-    <button 
-      class="tab-btn" 
-      [class.active]="activeTab === 'CANCELLED'" 
-      (click)="setTab('CANCELLED')">
-      Cancelled
-    </button>
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-state-container">
+    <div class="spinner-ring"></div>
+    <p>Loading your trips from Rentron...</p>
   </div>
 
-  <!-- Bookings List -->
-  <main class="bookings-content">
-    <div *ngIf="filteredBookings.length > 0; else emptyState" class="bookings-list">
-      <div 
-        *ngFor="let item of filteredBookings" 
-        class="booking-card" 
-        (click)="openJobDetails(item)">
-        <div class="card-header">
-          <span class="booking-num">{{ item.bookingNumber }}</span>
-          <span class="status-badge" [ngClass]="item.status.toLowerCase()">
-            {{ item.status === 'ONGOING' ? 'ON GOING' : item.status }}
-          </span>
-        </div>
+  <!-- Error State -->
+  <div *ngIf="errorMessage && !isLoading" class="error-state-card">
+    <span>⚠️ {{ errorMessage }}</span>
+    <button class="retry-btn" (click)="fetchBookings()">Retry</button>
+  </div>
 
-        <div class="card-body">
-          <div class="machine-icon-wrapper">
-            <span class="machine-emoji">{{ item.machineImage }}</span>
+  <!-- ========================================== -->
+  <!-- BOOKINGS LIST VIEW -->
+  <!-- ========================================== -->
+  <main *ngIf="!isLoading && activeDetailView === 'NONE'" class="bookings-list-content animate-fade-in">
+
+    <!-- Empty State -->
+    <div *ngIf="filteredBookings.length === 0" class="empty-bookings-box">
+      <div class="empty-emoji">
+        {{ activeTab === 'Ongoing' ? '🚖' : (activeTab === 'Completed' ? '🏁' : '🚫') }}
+      </div>
+      <h3>No {{ activeTab }} Bookings</h3>
+      <p>
+        {{ activeTab === 'Ongoing' ? 'You have no rides in progress or scheduled. Ready for your next journey?' : (activeTab === 'Completed' ? 'Your completed trips and receipts will appear here.' : 'No cancelled bookings.') }}
+      </p>
+      <button *ngIf="activeTab === 'Ongoing'" class="book-now-btn" routerLink="/booking">
+        Book a Ride Now ➔
+      </button>
+    </div>
+
+    <!-- Booking Cards List -->
+    <div class="cards-list">
+      @for (b of filteredBookings; track b.id) {
+        <div class="booking-summary-card" (click)="openBookingDetail(b)">
+          
+          <div class="card-header-bar">
+            <span class="booking-num">{{ b.bookingNumber || ('#BK' + b.id) }}</span>
+            <span class="status-pill" [ngClass]="getStatusBadgeClass(b.status)">
+              {{ (b.status || '').replace('_', ' ') }}
+            </span>
           </div>
 
-          <div class="card-info">
-            <h3 class="machine-title">{{ item.machineName }}</h3>
-            <p class="date-time">{{ item.startDate }} • {{ item.timeSlot.split('-')[0] }}</p>
-
-            <div class="location-row">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                <circle cx="12" cy="10" r="3"/>
-              </svg>
-              <span>{{ item.siteName }}</span>
+          <div class="vehicle-info-strip">
+            <div class="veh-icon">
+              {{ b.bookingType === 'HEAVY_EQUIPMENT' ? '🚜' : (b.bookingType === 'RENTAL' ? '⏳' : '🚗') }}
+            </div>
+            <div class="veh-details">
+              <h4>{{ b.bookingType || 'Ride Booking' }}</h4>
+              <p class="schedule-sub">{{ b.scheduledPickupAt ? (b.scheduledPickupAt | date:'medium') : (b.bookingDate + ' ' + (b.bookingTime || '')) }}</p>
+            </div>
+            <div class="card-fare-box">
+              <span class="fare-val">₹{{ b.finalFare || b.totalAmount }}</span>
+              <span class="pay-method-sub">{{ b.paymentMethod }}</span>
             </div>
           </div>
-        </div>
 
-        <div class="card-footer">
-          <div class="price-col">
-            <span class="price-label">Total Amount</span>
-            <span class="price-val">₹{{ item.totalAmount | number }}</span>
+          <!-- Route Preview -->
+          <div class="route-preview-block">
+            <div class="route-line-item">
+              <span class="dot green-dot"></span>
+              <p class="addr-text">{{ b.pickupAddressText || 'Pickup Location' }}</p>
+            </div>
+            <div class="route-line-item">
+              <span class="dot red-dot"></span>
+              <p class="addr-text">{{ b.destinationAddressText || 'Destination Location' }}</p>
+            </div>
           </div>
-          <button class="details-btn">
-            <span>View Details</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 18l6-6-6-6"/>
-            </svg>
-          </button>
+
+          <div class="card-action-footer">
+            <span class="view-details-cta">View Live Trip & Details ➔</span>
+          </div>
+        </div>
+      }
+    </div>
+  </main>
+
+  <!-- ========================================== -->
+  <!-- DETAIL VIEW 1: SCHEDULED RIDE VIEW -->
+  <!-- ========================================== -->
+  <section *ngIf="activeDetailView === 'SCHEDULED' && selectedBooking" class="detail-full-view animate-slide-up">
+    <div class="detail-top-nav">
+      <button class="back-circle-btn" (click)="closeDetailView()">←</button>
+      <h2>Scheduled Booking Details</h2>
+      <span class="spacer"></span>
+    </div>
+
+    <div class="scheduled-banner-card">
+      <div class="sched-icon">📅</div>
+      <div>
+        <h3>Pickup Scheduled</h3>
+        <p class="pickup-datetime">
+          {{ selectedBooking.scheduledPickupAt ? (selectedBooking.scheduledPickupAt | date:'medium') : (selectedBooking.bookingDate + ' ' + selectedBooking.bookingTime) }}
+        </p>
+        <span class="driver-note">Driver details will be shared 10 mins before pickup</span>
+      </div>
+    </div>
+
+    <!-- OTP Display Box -->
+    <div *ngIf="selectedBooking.otp" class="otp-verification-card">
+      <span class="otp-title">Ride Start Verification PIN</span>
+      <div class="otp-digits">{{ selectedBooking.otp }}</div>
+      <p class="otp-hint">Share this 4-digit PIN only with your driver when boarding the vehicle.</p>
+    </div>
+
+    <!-- Route Card -->
+    <div class="route-detail-card">
+      <h3>Trip Route</h3>
+      <div class="route-point">
+        <span class="dot green-dot"></span>
+        <div>
+          <label>Pickup</label>
+          <p>{{ selectedBooking.pickupAddressText }}</p>
+        </div>
+      </div>
+      <div class="route-point">
+        <span class="dot red-dot"></span>
+        <div>
+          <label>Destination</label>
+          <p>{{ selectedBooking.destinationAddressText }}</p>
         </div>
       </div>
     </div>
 
-    <ng-template #emptyState>
-      <div class="empty-bookings">
-        <div class="empty-icon-circle">
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1.8">
-            <rect x="3" y="4" width="18" height="16" rx="2"/>
-            <line x1="16" y1="2" x2="16" y2="6"/>
-            <line x1="8" y1="2" x2="8" y2="6"/>
-            <line x1="3" y1="10" x2="21" y2="10"/>
-          </svg>
-        </div>
-        <h3>No {{ activeTab | lowercase }} bookings</h3>
-        <p>You haven't {{ activeTab === 'CANCELLED' ? 'cancelled any' : 'any ' + (activeTab | lowercase) }} bookings yet.</p>
+    <!-- Fare Summary -->
+    <div class="fare-summary-card">
+      <h3>Estimated Fare Summary</h3>
+      <div class="fare-row">
+        <span>Total Estimated Amount</span>
+        <strong>₹{{ selectedBooking.totalAmount }}</strong>
       </div>
-    </ng-template>
-  </main>
+      <div class="fare-row">
+        <span>Payment Method</span>
+        <span>{{ selectedBooking.paymentMethod }}</span>
+      </div>
+      <div class="fare-row">
+        <span>Payment Status</span>
+        <span class="pay-status-pill">{{ selectedBooking.paymentStatus }}</span>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="detail-bottom-actions">
+      <button class="cancel-booking-red-btn" (click)="promptCancel()">
+        Cancel Scheduled Ride
+      </button>
+    </div>
+  </section>
+
+  <!-- ========================================== -->
+  <!-- DETAIL VIEW 2: SEARCHING DRIVER STATE -->
+  <!-- ========================================== -->
+  <section *ngIf="activeDetailView === 'SEARCHING' && selectedBooking" class="detail-full-view animate-slide-up">
+    <div class="detail-top-nav">
+      <button class="back-circle-btn" (click)="closeDetailView()">←</button>
+      <h2>Searching for Driver</h2>
+      <span class="spacer"></span>
+    </div>
+
+    <div class="searching-radar-container">
+      <div class="radar-pulse-ring ring-1"></div>
+      <div class="radar-pulse-ring ring-2"></div>
+      <div class="radar-pulse-ring ring-3"></div>
+      <div class="radar-center-vehicle">🚖</div>
+    </div>
+
+    <div class="searching-status-text-block">
+      <h3>Connecting with nearby drivers...</h3>
+      <p>Booking Number: <strong>{{ selectedBooking.bookingNumber }}</strong></p>
+      
+      <div *ngIf="allocationProgress" class="allocation-stats-badge">
+        <span>Offers Broadcasted: <strong>{{ allocationProgress.totalOffersMade }}</strong></span>
+        <span>Active Offers: <strong>{{ allocationProgress.activeOffers }}</strong></span>
+      </div>
+      
+      <p class="searching-sub-hint">We are dispatching your request to the highest-rated drivers within your pickup radius. Please keep this screen open.</p>
+    </div>
+
+    <!-- Route summary -->
+    <div class="route-detail-card compact">
+      <div class="route-point">
+        <span class="dot green-dot"></span>
+        <p>{{ selectedBooking.pickupAddressText }}</p>
+      </div>
+      <div class="route-point">
+        <span class="dot red-dot"></span>
+        <p>{{ selectedBooking.destinationAddressText }}</p>
+      </div>
+    </div>
+
+    <div class="detail-bottom-actions">
+      <button class="cancel-booking-red-btn" (click)="promptCancel()">
+        Cancel Request
+      </button>
+    </div>
+  </section>
+
+  <!-- ========================================== -->
+  <!-- DETAIL VIEW 3: IN PROGRESS / LIVE TRACKING -->
+  <!-- ========================================== -->
+  <section *ngIf="activeDetailView === 'IN_PROGRESS' && selectedBooking" class="detail-full-view animate-slide-up">
+    <div class="detail-top-nav">
+      <button class="back-circle-btn" (click)="closeDetailView()">←</button>
+      <h2>Live Trip Tracking</h2>
+      <span class="spacer"></span>
+    </div>
+
+    <!-- Live Leaflet Map Container -->
+    <div class="live-map-viewport">
+      <div id="trackingMapContainer" class="map-inner-canvas"></div>
+    </div>
+
+    <!-- Driver Card -->
+    <div class="driver-profile-card">
+      <div class="driver-avatar-thumb">
+        👤
+      </div>
+      <div class="driver-bio">
+        <h3>{{ liveTracking?.driverName || 'Assigned Driver' }}</h3>
+        <div class="rating-row">
+          <span>⭐ {{ liveTracking?.driverRating || '4.9' }}</span>
+          <span class="vehicle-model">• {{ liveTracking?.vehicleType || 'Sedan Taxi' }}</span>
+        </div>
+      </div>
+      <div class="driver-contact-actions">
+        <a *ngIf="liveTracking?.driverPhone" href="tel:{{ liveTracking?.driverPhone }}" class="call-driver-btn" title="Call Driver">
+          📞 Call
+        </a>
+      </div>
+    </div>
+
+    <!-- Ride Start OTP Banner -->
+    <div *ngIf="selectedBooking.otp" class="ride-otp-banner">
+      <span>START OTP:</span>
+      <strong>{{ selectedBooking.otp }}</strong>
+    </div>
+
+    <!-- Status Timeline -->
+    <div class="status-timeline-card">
+      <h3>Trip Progress</h3>
+      <div class="timeline-stepper">
+        <div class="step-item completed">
+          <span class="step-dot">✓</span>
+          <p>Driver Assigned</p>
+        </div>
+        <div class="step-item" [class.completed]="['DRIVER_ON_THE_WAY', 'ARRIVED', 'STARTED', 'IN_PROGRESS'].includes((selectedBooking.status || '').toUpperCase())">
+          <span class="step-dot">➔</span>
+          <p>On the Way</p>
+        </div>
+        <div class="step-item" [class.completed]="['ARRIVED', 'STARTED', 'IN_PROGRESS'].includes((selectedBooking.status || '').toUpperCase())">
+          <span class="step-dot">📍</span>
+          <p>Arrived</p>
+        </div>
+        <div class="step-item" [class.completed]="['STARTED', 'IN_PROGRESS'].includes((selectedBooking.status || '').toUpperCase())">
+          <span class="step-dot">🚀</span>
+          <p>Ride Started</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Driver Tipping Section -->
+    <div class="driver-tipping-card">
+      <h3>Add a Tip for Driver</h3>
+      <p class="tip-sub">100% of the tip goes directly to your driver</p>
+
+      <div class="tip-chips-row">
+        <button 
+          type="button" 
+          class="tip-chip" 
+          [class.active]="selectedTipAmount === 10 && !customTipAmount" 
+          (click)="selectTip(10)">
+          + ₹10
+        </button>
+        <button 
+          type="button" 
+          class="tip-chip" 
+          [class.active]="selectedTipAmount === 30 && !customTipAmount" 
+          (click)="selectTip(30)">
+          + ₹30
+        </button>
+        <button 
+          type="button" 
+          class="tip-chip" 
+          [class.active]="selectedTipAmount === 50 && !customTipAmount" 
+          (click)="selectTip(50)">
+          + ₹50
+        </button>
+        <button 
+          type="button" 
+          class="tip-chip" 
+          [class.active]="selectedTipAmount === 100 && !customTipAmount" 
+          (click)="selectTip(100)">
+          + ₹100
+        </button>
+      </div>
+
+      <div class="custom-tip-row">
+        <input 
+          type="number" 
+          [(ngModel)]="customTipAmount" 
+          placeholder="Custom tip amount (₹)" 
+          class="custom-tip-input"
+        />
+        <button 
+          type="button" 
+          class="submit-tip-btn" 
+          [disabled]="isTipSubmitting" 
+          (click)="submitDriverTip()">
+          {{ isTipSubmitting ? 'Adding...' : 'Add Tip' }}
+        </button>
+      </div>
+
+      <p *ngIf="tipSuccessMessage" class="tip-success-text">{{ tipSuccessMessage }}</p>
+    </div>
+
+    <!-- Emergency & Actions -->
+    <div class="detail-bottom-actions">
+      <button class="cancel-booking-red-btn" (click)="promptCancel()">
+        Cancel Trip
+      </button>
+    </div>
+  </section>
+
+  <!-- ========================================== -->
+  <!-- DETAIL VIEW 4: COMPLETED TRIP VIEW -->
+  <!-- ========================================== -->
+  <section *ngIf="activeDetailView === 'COMPLETED' && selectedBooking" class="detail-full-view animate-slide-up">
+    <div class="detail-top-nav">
+      <button class="back-circle-btn" (click)="closeDetailView()">←</button>
+      <h2>Completed Trip</h2>
+      <span class="spacer"></span>
+    </div>
+
+    <div class="completed-trophy-banner">
+      <span class="trophy-emoji">🏁</span>
+      <h3>Trip Completed</h3>
+      <p>Booking Number: <strong>{{ selectedBooking.bookingNumber }}</strong></p>
+      <span class="paid-badge">Paid via {{ selectedBooking.paymentMethod }}</span>
+    </div>
+
+    <!-- Final Fare Breakdown Card -->
+    <div class="fare-summary-card">
+      <h3>Final Fare Receipt</h3>
+      <div class="fare-row" *ngIf="selectedBooking.baseAmount">
+        <span>Base Fare</span>
+        <span>₹{{ selectedBooking.baseAmount }}</span>
+      </div>
+      <div class="fare-row" *ngIf="selectedBooking.distanceAmount">
+        <span>Distance Charges</span>
+        <span>₹{{ selectedBooking.distanceAmount }}</span>
+      </div>
+      <div class="fare-row" *ngIf="selectedBooking.timeAmount">
+        <span>Time Charges</span>
+        <span>₹{{ selectedBooking.timeAmount }}</span>
+      </div>
+      <div class="fare-row" *ngIf="selectedBooking.driverTip">
+        <span>Driver Tip</span>
+        <span>₹{{ selectedBooking.driverTip }}</span>
+      </div>
+      <div class="fare-row" *ngIf="selectedBooking.taxAmount">
+        <span>Taxes (GST)</span>
+        <span>₹{{ selectedBooking.taxAmount }}</span>
+      </div>
+      <div class="fare-row grand-total">
+        <span>Total Fare Paid</span>
+        <strong>₹{{ selectedBooking.finalFare || selectedBooking.totalAmount }}</strong>
+      </div>
+    </div>
+
+    <!-- Route Summary -->
+    <div class="route-detail-card compact">
+      <div class="route-point">
+        <span class="dot green-dot"></span>
+        <p>{{ selectedBooking.pickupAddressText }}</p>
+      </div>
+      <div class="route-point">
+        <span class="dot red-dot"></span>
+        <p>{{ selectedBooking.destinationAddressText }}</p>
+      </div>
+    </div>
+
+    <!-- Download Invoice CTA -->
+    <div class="detail-bottom-actions">
+      <button class="download-invoice-yellow-btn" (click)="downloadInvoice(selectedBooking.id)">
+        📄 View & Download Tax Invoice
+      </button>
+    </div>
+  </section>
+
+  <!-- ========================================== -->
+  <!-- DETAIL VIEW 5: CANCELLED TRIP VIEW -->
+  <!-- ========================================== -->
+  <section *ngIf="activeDetailView === 'CANCELLED' && selectedBooking" class="detail-full-view animate-slide-up">
+    <div class="detail-top-nav">
+      <button class="back-circle-btn" (click)="closeDetailView()">←</button>
+      <h2>Booking Cancelled</h2>
+      <span class="spacer"></span>
+    </div>
+
+    <div class="cancelled-banner-card">
+      <span class="cancelled-icon">🚫</span>
+      <h3>Booking #{{ selectedBooking.bookingNumber }}</h3>
+      <p class="cancellation-reason">
+        Reason: <strong>{{ selectedBooking.cancellationReason || 'Cancelled by customer' }}</strong>
+      </p>
+    </div>
+
+    <div class="refund-info-box">
+      <h4>Refund & Fee Policy</h4>
+      <p *ngIf="selectedBooking.paymentMethod === 'Cash'">
+        ✓ No cancellation fee applied. Nothing is due.
+      </p>
+      <p *ngIf="selectedBooking.paymentMethod === 'Online'">
+        ✓ If charged, the refund has been credited back to your original source account according to banking guidelines.
+      </p>
+    </div>
+
+    <div class="detail-bottom-actions">
+      <button class="book-now-btn" (click)="closeDetailView(); setTab('Ongoing')">
+        Book Another Ride ➔
+      </button>
+    </div>
+  </section>
 
   <!-- Bottom Navigation -->
   <app-bottom-nav activeTab="BOOKINGS"></app-bottom-nav>
 
-  <!-- ==================== JOB DETAILS MODAL / DRAWER ==================== -->
-  <div class="modal-backdrop" *ngIf="showJobDetailsModal" (click)="closeJobDetails()">
-    <div class="job-details-modal" (click)="$event.stopPropagation()">
+  <!-- ========================================== -->
+  <!-- MODAL: CANCELLATION REASON MODAL -->
+  <!-- ========================================== -->
+  <div *ngIf="showCancelModal" class="modal-backdrop-overlay" (click)="showCancelModal = false">
+    <div class="bottom-sheet-dialog animate-slide-up" (click)="$event.stopPropagation()">
+      <div class="sheet-header">
+        <h2>Cancel Booking</h2>
+        <p class="sheet-sub">Please select a reason for cancelling this trip:</p>
+      </div>
+
+      <div class="cancel-reasons-list">
+        <label class="reason-radio-row">
+          <input type="radio" [(ngModel)]="cancelReason" value="Changed my plans" />
+          <span>Changed my plans</span>
+        </label>
+        <label class="reason-radio-row">
+          <input type="radio" [(ngModel)]="cancelReason" value="Driver asked to cancel" />
+          <span>Driver asked to cancel</span>
+        </label>
+        <label class="reason-radio-row">
+          <input type="radio" [(ngModel)]="cancelReason" value="Expected a shorter wait time" />
+          <span>Expected a shorter wait time</span>
+        </label>
+        <label class="reason-radio-row">
+          <input type="radio" [(ngModel)]="cancelReason" value="Selected wrong address" />
+          <span>Selected wrong address</span>
+        </label>
+      </div>
+
+      <button 
+        class="sheet-confirm-btn red-btn" 
+        [disabled]="isCancelling" 
+        (click)="confirmCancellation()">
+        {{ isCancelling ? 'Processing Cancellation...' : 'Confirm Cancellation' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: INVOICE DOWNLOAD / RECEIPT MODAL -->
+  <!-- ========================================== -->
+  <div *ngIf="showInvoiceModal && invoiceData" class="modal-backdrop-overlay" (click)="closeInvoiceModal()">
+    <div class="invoice-modal-card animate-slide-up" (click)="$event.stopPropagation()">
       
-      <!-- Drawer Header -->
-      <div class="modal-top-bar">
-        <button class="icon-close" (click)="closeJobDetails()">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 6L6 18M6 6l12 12"/>
-          </svg>
-        </button>
-        <span class="top-booking-id">Job Details {{ selectedBooking?.bookingNumber }}</span>
-        <button 
-          *ngIf="selectedBooking?.status === 'ONGOING'" 
-          class="cancel-text-btn" 
-          (click)="openCancelFlow()">
-          Cancel Booking
-        </button>
+      <div class="invoice-header">
+        <div>
+          <h2>Rentron Mobility & Equipment</h2>
+          <p class="tax-inv-title">TAX INVOICE / CASH RECEIPT</p>
+        </div>
+        <button class="close-x-btn" (click)="closeInvoiceModal()">✕</button>
       </div>
 
-      <div class="modal-scroll-content" *ngIf="selectedBooking">
-        <!-- Site Name Title -->
-        <div class="site-header-block">
-          <h2>{{ selectedBooking.siteName }}</h2>
-          <p class="site-address-sub">{{ selectedBooking.siteAddress }}</p>
+      <div class="invoice-meta-grid">
+        <div>
+          <label>Invoice Number</label>
+          <strong>{{ invoiceData.invoiceNumber }}</strong>
         </div>
-
-        <!-- Payment Progress Box -->
-        <div class="payment-progress-card">
-          <div class="pay-top-row">
-            <span class="total-label">Total Job Amount</span>
-            <span class="total-value">₹{{ selectedBooking.totalAmount | number }}</span>
-          </div>
-
-          <div class="progress-bar-container">
-            <div class="bar-fill advance" style="width: 30%"></div>
-            <div class="bar-fill balance" style="width: 70%"></div>
-          </div>
-
-          <div class="progress-labels">
-            <div class="chip-item green">
-              <span class="chip-dot"></span>
-              <span>₹{{ selectedBooking.advancePaid | number }} ADVANCE PAID</span>
-            </div>
-            <div class="chip-item orange">
-              <span class="chip-dot"></span>
-              <span>₹{{ selectedBooking.balanceAmount | number }} TO PAY BALANCE</span>
-            </div>
-          </div>
+        <div>
+          <label>Booking Number</label>
+          <strong>{{ invoiceData.bookingNumber }}</strong>
         </div>
-
-        <!-- Work in Progress Live Timer (if ongoing) -->
-        <div class="work-timer-banner" *ngIf="selectedBooking.status === 'ONGOING'">
-          <div class="timer-badge">Work In Progress</div>
-          <div class="timer-clock">{{ formattedWorkTimer }}</div>
-          <div class="timer-sub-flex">
-            <span>Est. Execution: 08:00 hrs</span>
-            <span>Est. Extra Time: 00:00:00</span>
-          </div>
+        <div>
+          <label>Date & Time</label>
+          <span>{{ invoiceData.date | date:'medium' }}</span>
         </div>
-
-        <!-- Operator Card -->
-        <div class="operator-card-section">
-          <div class="operator-profile-row">
-            <div class="operator-avatar">
-              <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" alt="Operator" />
-            </div>
-            <div class="operator-meta">
-              <span class="op-role">Operator</span>
-              <h4 class="op-name">{{ selectedBooking.operatorName }}</h4>
-              <p class="op-vehicle">{{ selectedBooking.machineName }} • {{ selectedBooking.vehicleNumber }}</p>
-            </div>
-            <div class="op-actions">
-              <a [href]="'tel:' + selectedBooking.operatorPhone" class="op-btn call" title="Call Operator">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-                </svg>
-              </a>
-              <button class="op-btn chat" (click)="goToTrack(selectedBooking)" title="Message">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Vehicle & Attachment Specs -->
-        <div class="vehicle-specs-card">
-          <div class="specs-header">
-            <span class="v-emoji">🚜</span>
-            <div>
-              <h3>{{ selectedBooking.machineName }}</h3>
-              <p class="v-tags">1x Excavator • 1x Ditcher • 1x Driver</p>
-            </div>
-          </div>
-          <div class="v-desc">
-            <p><strong>Vehicle Description:</strong> {{ selectedBooking.description }}</p>
-          </div>
-        </div>
-
-        <!-- Work Schedule -->
-        <div class="schedule-card">
-          <div class="sch-title">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="4" width="18" height="18" rx="2"/>
-              <line x1="16" y1="2" x2="16" y2="6"/>
-              <line x1="8" y1="2" x2="8" y2="6"/>
-              <line x1="3" y1="10" x2="21" y2="10"/>
-            </svg>
-            <span>Work Schedule</span>
-          </div>
-          <div class="sch-dates">
-            <span class="sch-day">{{ selectedBooking.startDate }}</span>
-            <span class="sch-hours">{{ selectedBooking.timeSlot }}</span>
-            <span class="sch-eta-badge">Arrival ETA {{ selectedBooking.eta }}</span>
-          </div>
-        </div>
-
-        <!-- Site Location Leaflet Canvas -->
-        <div class="location-preview-card">
-          <div class="loc-head">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-              <circle cx="12" cy="10" r="3"/>
-            </svg>
-            <span>Site Location</span>
-          </div>
-          <div class="mini-map-frame">
-            <div id="jobDetailsMiniMap" class="mini-map-canvas"></div>
-            <div class="mini-map-overlay-address">
-              <strong>{{ selectedBooking.siteName }}</strong>
-              <p>{{ selectedBooking.siteAddress }}</p>
-            </div>
-          </div>
+        <div>
+          <label>Payment Method</label>
+          <span>{{ invoiceData.paymentMethod }} ({{ invoiceData.paymentStatus }})</span>
         </div>
       </div>
 
-      <!-- Action Footer -->
-      <div class="modal-footer-actions">
-        <button 
-          *ngIf="selectedBooking?.status === 'ONGOING'" 
-          class="btn-primary-yellow" 
-          (click)="goToTrack(selectedBooking!)">
-          Live Tracking
-        </button>
+      <div class="invoice-route-box">
+        <p><strong>Pickup:</strong> {{ invoiceData.pickupAddress }}</p>
+        <p><strong>Destination:</strong> {{ invoiceData.destinationAddress }}</p>
+      </div>
 
-        <button 
-          *ngIf="selectedBooking?.status === 'ONGOING'" 
-          class="btn-secondary-outline" 
-          (click)="openWorkCompletedFlow()">
-          Simulate Job Completion & Pay
-        </button>
+      <table class="invoice-table">
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th class="text-right">Amount (₹)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Base Vehicle Fare</td>
+            <td class="text-right">₹{{ invoiceData.baseAmount }}</td>
+          </tr>
+          <tr *ngIf="invoiceData.distanceAmount">
+            <td>Distance Charges ({{ invoiceData.distanceKm }} km)</td>
+            <td class="text-right">₹{{ invoiceData.distanceAmount }}</td>
+          </tr>
+          <tr *ngIf="invoiceData.timeAmount">
+            <td>Time Charges</td>
+            <td class="text-right">₹{{ invoiceData.timeAmount }}</td>
+          </tr>
+          <tr *ngIf="invoiceData.driverTip">
+            <td>Driver Tip</td>
+            <td class="text-right">₹{{ invoiceData.driverTip }}</td>
+          </tr>
+          <tr *ngIf="invoiceData.taxAmount">
+            <td>Applicable GST</td>
+            <td class="text-right">₹{{ invoiceData.taxAmount }}</td>
+          </tr>
+          <tr class="grand-total-row">
+            <td><strong>Total Amount Paid</strong></td>
+            <td class="text-right"><strong>₹{{ invoiceData.finalFare || invoiceData.totalAmount }}</strong></td>
+          </tr>
+        </tbody>
+      </table>
 
-        <button 
-          *ngIf="selectedBooking?.status === 'COMPLETED'" 
-          class="btn-primary-yellow" 
-          (click)="openFeedbackModal()">
-          Rate & Review Operator
-        </button>
-
-        <button 
-          *ngIf="selectedBooking?.status === 'CANCELLED'" 
-          class="btn-secondary-outline" 
-          (click)="closeJobDetails()">
-          Back to Bookings
-        </button>
+      <div class="invoice-actions">
+        <button class="print-btn" (click)="printInvoice()">🖨️ Print / Save as PDF</button>
+        <button class="sheet-confirm-btn" (click)="closeInvoiceModal()">Close</button>
       </div>
     </div>
   </div>
 
-  <!-- ==================== CANCEL BOOKING REASON MODAL ==================== -->
-  <div class="modal-backdrop" *ngIf="showCancelModal" (click)="closeCancelModal()">
-    <div class="cancel-reason-modal" (click)="$event.stopPropagation()">
-      <h3 class="cancel-modal-title">Cancel Booking</h3>
-      <p class="cancel-modal-sub">Are you sure you want to cancel this booking?</p>
-
-      <div class="reasons-radio-list">
-        <label class="radio-option">
-          <input type="radio" name="cancelReason" value="Site clearance postponed" [(ngModel)]="cancelReason" />
-          <span class="radio-dot"></span>
-          <span>Site clearance postponed</span>
-        </label>
-
-        <label class="radio-option">
-          <input type="radio" name="cancelReason" value="Too high price" [(ngModel)]="cancelReason" />
-          <span class="radio-dot"></span>
-          <span>Too high price</span>
-        </label>
-
-        <label class="radio-option">
-          <input type="radio" name="cancelReason" value="Other" [(ngModel)]="cancelReason" />
-          <span class="radio-dot"></span>
-          <span>Other</span>
-        </label>
-
-        <div *ngIf="cancelReason === 'Other'" class="other-notes-field">
-          <textarea 
-            rows="3" 
-            placeholder="Please briefly explain why you need to cancel this job..." 
-            [(ngModel)]="cancelOtherNotes">
-          </textarea>
-        </div>
-      </div>
-
-      <div class="cancel-actions">
-        <button class="btn-danger-red" (click)="confirmCancellation()">
-          Confirm Cancellation
-        </button>
-        <button class="btn-light-cancel" (click)="closeCancelModal()">
-          Go Back
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================== BOOKING CANCELLED REFUND CONFIRMATION ==================== -->
-  <div class="modal-backdrop" *ngIf="showCancelledConfirmationModal" (click)="closeCancelledConfirmation()">
-    <div class="refund-summary-modal" (click)="$event.stopPropagation()">
-      <div class="cancel-icon-badge">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="15" y1="9" x2="9" y2="15"/>
-          <line x1="9" y1="9" x2="15" y2="15"/>
-        </svg>
-      </div>
-
-      <h2>Booking Cancelled</h2>
-      <p class="refund-desc">Your booking for {{ selectedBooking?.machineName }} has been safely cancelled as requested.</p>
-
-      <div class="zero-fee-pill">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-          <polyline points="22 4 12 14.01 9 11.01"/>
-        </svg>
-        <span>Zero Cancellation Fee Applied</span>
-      </div>
-
-      <div class="refund-breakdown-box">
-        <div class="ref-header">
-          <span class="tag-status">REFUND INITIATED</span>
-          <span class="tag-process">IN PROGRESS</span>
-        </div>
-
-        <div class="ref-row main">
-          <span>Crediting Amount</span>
-          <span class="ref-amount">₹{{ cancelledRefundSummary?.refundAmount | number }}</span>
-        </div>
-        <div class="ref-row sub">
-          <span>20% Advance Refund</span>
-          <span>{{ cancelledRefundSummary?.refundAccount }}</span>
-        </div>
-      </div>
-
-      <p class="refund-note">100% Refund managed. Money credited back within 24-48 hours.</p>
-
-      <button class="btn-primary-yellow" (click)="closeCancelledConfirmation()">
-        Back to Home
-      </button>
-    </div>
-  </div>
-
-  <!-- ==================== WORK COMPLETED & PAYMENT RECEIPT MODAL ==================== -->
-  <div class="modal-backdrop" *ngIf="showWorkCompletedModal" (click)="closeWorkCompletedModal()">
-    <div class="work-completed-modal" (click)="$event.stopPropagation()">
-      <div class="green-check-icon">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5">
-          <circle cx="12" cy="12" r="10"/>
-          <path d="M9 12l2 2 4-4"/>
-        </svg>
-      </div>
-      <h2>Work Completed</h2>
-      <p class="wc-sub">Total Payable Amount for shift</p>
-      <div class="wc-total">₹{{ selectedBooking?.totalAmount | number }}</div>
-
-      <div class="wc-actions">
-        <button class="btn-primary-yellow" (click)="payCompletedBalance()">
-          Pay Now via UPI / Card
-        </button>
-        <button class="btn-secondary-outline" (click)="payCompletedBalance()">
-          Paid via Cash to Operator
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Payment Receipt -->
-  <div class="modal-backdrop" *ngIf="showPaymentReceiptModal" (click)="openFeedbackModal()">
-    <div class="receipt-modal" (click)="$event.stopPropagation()">
-      <div class="receipt-success-badge">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5">
-          <circle cx="12" cy="12" r="10"/>
-          <path d="M9 12l2 2 4-4"/>
-        </svg>
-      </div>
-      <h2>Paid</h2>
-      <p class="rc-sub">Transaction completed successfully</p>
-      <div class="rc-amount">₹{{ selectedBooking?.totalAmount | number }}</div>
-
-      <div class="rc-info-card">
-        <div class="rc-row">
-          <span>Payment Method</span>
-          <strong>Paid via UPI</strong>
-        </div>
-        <div class="rc-row">
-          <span>Reference ID</span>
-          <strong>TXN-86024-A1</strong>
-        </div>
-        <div class="rc-row">
-          <span>Date & Time</span>
-          <strong>Oct 24, 2026</strong>
-        </div>
-      </div>
-
-      <button class="btn-primary-yellow" (click)="openFeedbackModal()">
-        Rate Operator Performance
-      </button>
-    </div>
-  </div>
-
-  <!-- 5-Star Interactive Rating Modal -->
-  <div class="modal-backdrop" *ngIf="showFeedbackModal" (click)="showFeedbackModal = false">
-    <div class="feedback-modal" (click)="$event.stopPropagation()">
-      <h3>Rate Operator Performance</h3>
-      <p class="fb-sub">How was your experience with {{ selectedBooking?.operatorName }}?</p>
-
-      <!-- Star Rating Controls -->
-      <div class="star-rating-row">
-        <span 
-          *ngFor="let star of [1, 2, 3, 4, 5]" 
-          class="star-icon" 
-          [class.filled]="star <= selectedStarRating" 
-          (click)="setStarRating(star)">
-          ★
-        </span>
-      </div>
-
-      <div class="feedback-tags-grid">
-        <button 
-          *ngFor="let tag of feedbackTags" 
-          class="tag-btn" 
-          [class.selected]="tag.selected" 
-          (click)="toggleTag(tag)">
-          {{ tag.label }}
-        </button>
-      </div>
-
-      <div class="fb-notes">
-        <textarea 
-          rows="3" 
-          placeholder="Add optional notes for the operator..." 
-          [(ngModel)]="feedbackNotes">
-        </textarea>
-      </div>
-
-      <button class="btn-primary-yellow" (click)="submitFeedback()">
-        Submit Feedback
-      </button>
-    </div>
-  </div>
-
-  <!-- Feedback Submitted Overlay -->
-  <div class="modal-backdrop" *ngIf="showFeedbackSubmittedSuccess">
-    <div class="feedback-success-card">
-      <div class="star-badge-gold">
-        ★
-      </div>
-      <h2>Feedback Submitted!</h2>
-      <p>Thank you for helping us improve your service experience.</p>
-    </div>
-  </div>
 </div>

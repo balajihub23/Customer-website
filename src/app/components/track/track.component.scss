@@ -403,3 +403,83 @@
     }
   }
 }
+
+/* Phase 2 Live Tracking Styles */
+.booking-num-badge {
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.op-photo-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+}
+
+.track-otp-card {
+  position: absolute;
+  top: 90px;
+  left: 16px;
+  right: 16px;
+  z-index: 1000;
+  background: #1e293b;
+  color: #ffffff;
+  padding: 10px 16px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+
+  strong {
+    font-size: 20px;
+    letter-spacing: 4px;
+    color: #f59e0b;
+  }
+}
+
+.view-bookings-cta-btn {
+  background: #f59e0b;
+  color: #000000;
+  border: none;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 12px 24px;
+  border-radius: 999px;
+  margin-top: 20px;
+  cursor: pointer;
+}
+
+.arrived-popup-banner {
+  position: fixed;
+  top: 20px;
+  left: 16px;
+  right: 16px;
+  z-index: 2000;
+  background: #dcfce7;
+  border: 1px solid #86efac;
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+
+  .arrived-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .arrived-bell { font-size: 24px; }
+    strong { display: block; color: #166534; font-size: 14px; }
+    p { margin: 2px 0 0; font-size: 12px; color: #15803d; }
+    button { margin-left: auto; background: none; border: none; font-size: 16px; cursor: pointer; color: #166534; }
+  }
+}

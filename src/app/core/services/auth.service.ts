@@ -71,6 +71,10 @@ export class AuthService {
     return localStorage.getItem('customer_access_token');
   }
 
+  getToken(): string | null {
+    return this.getAccessToken();
+  }
+
   getUser(): any {
     if (!isPlatformBrowser(this.platformId)) return null;
     const str = localStorage.getItem('customer_user_info');
