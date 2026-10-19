@@ -4,6 +4,10 @@
 :root {
   /* Default Light Mode Tokens */
   --app-background: #F8F9FB;
+  --bg-color: #F8F9FB;
+  --card-bg: #FFFFFF;
+  --text-color: #111827;
+  --bg-secondary: #F3F4F6;
   --bg-primary: #F8F9FB;
   --bg-card: #FFFFFF;
   --surface: #FFFFFF;
@@ -48,6 +52,10 @@
 /* Dark Theme Overrides */
 [data-theme="dark"] {
   --app-background: #0F172A;
+  --bg-color: #0F172A;
+  --card-bg: #1E293B;
+  --text-color: #F8FAFC;
+  --bg-secondary: #334155;
   --bg-primary: #0F172A;
   --bg-card: #1E293B;
   --surface: #1E293B;
@@ -198,4 +206,326 @@ body {
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
   margin-bottom: 16px;
+}
+
+
+/* ======================================================= */
+/* GLOBAL COMPONENT THEME OVERRIDES (PENETRATING ALL VIEWS) */
+/* ======================================================= */
+[data-theme="dark"],
+.dark-mode {
+  --bg-primary: #0F172A;
+  --bg-color: #0F172A;
+  --app-background: #0F172A;
+  --surface: #1E293B;
+  --surface-secondary: #334155;
+  --card-bg: #1E293B;
+  --text-primary: #F8FAFC;
+  --text-color: #F8FAFC;
+  --text-secondary: #CBD5E1;
+  --text-muted: #94A3B8;
+  --border: #334155;
+  --border-color: #334155;
+}
+
+[data-theme="dark"] html,
+[data-theme="dark"] body,
+body.dark-mode {
+  background-color: #0F172A !important;
+  color: #F8FAFC !important;
+}
+
+[data-theme="dark"] .mobile-app-container,
+.mobile-app-container.dark-mode {
+  background-color: #0F172A !important;
+}
+
+/* My Bookings Page Dark Theme */
+[data-theme="dark"] .bookings-viewport,
+.bookings-viewport.dark-mode {
+  background-color: #0F172A !important;
+  color: #F8FAFC !important;
+
+  .bookings-header {
+    background: #1E293B !important;
+    border-color: #334155 !important;
+
+    .page-title {
+      color: #F8FAFC !important;
+    }
+
+    .refresh-btn, .theme-toggle-btn {
+      background: #334155 !important;
+      color: #F8FAFC !important;
+      border: 1px solid #475569 !important;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  }
+
+  .tabs-segmented-control {
+    background: #1E293B !important;
+    border-color: #334155 !important;
+
+    .tab-btn {
+      background: #334155 !important;
+      color: #CBD5E1 !important;
+
+      &.active {
+        background: #F59E0B !important;
+        color: #000000 !important;
+        font-weight: 700 !important;
+      }
+    }
+  }
+
+  .booking-job-card {
+    background: #1E293B !important;
+    border-color: #334155 !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25) !important;
+
+    .card-top h3, .card-top .booking-id {
+      color: #F8FAFC !important;
+    }
+
+    .address-line .address-text {
+      color: #F8FAFC !important;
+    }
+
+    .fare-box .fare-amount {
+      color: #FBBF24 !important;
+    }
+
+    .card-footer {
+      border-color: #334155 !important;
+    }
+  }
+
+  .empty-state-card {
+    background: #1E293B !important;
+    border-color: #334155 !important;
+
+    h3 {
+      color: #F8FAFC !important;
+    }
+
+    p {
+      color: #94A3B8 !important;
+    }
+  }
+
+  .detail-view-container {
+    background: #0F172A !important;
+    color: #F8FAFC !important;
+
+    .detail-card {
+      background: #1E293B !important;
+      border-color: #334155 !important;
+      color: #F8FAFC !important;
+    }
+  }
+}
+
+/* Booking Flow Page Dark Theme */
+[data-theme="dark"] .booking-flow-viewport,
+.booking-flow-viewport.dark-mode {
+  background-color: #0F172A !important;
+  color: #F8FAFC !important;
+
+  .top-nav-bar {
+    background: #1E293B !important;
+    border-color: #334155 !important;
+
+    .nav-title-row {
+      .page-title {
+        color: #F8FAFC !important;
+      }
+      .nav-back-btn, .theme-toggle-btn {
+        background: #334155 !important;
+        color: #F8FAFC !important;
+      }
+    }
+
+    .pickup-pill-banner {
+      background: #334155 !important;
+      .pickup-address-text {
+        color: #F8FAFC !important;
+      }
+    }
+  }
+
+  .category-tabs-container {
+    background: #1E293B !important;
+    border-color: #334155 !important;
+
+    .cat-tab-card {
+      background: #1E293B !important;
+      border-color: #334155 !important;
+      .cat-name {
+        color: #CBD5E1 !important;
+      }
+
+      &.active {
+        background: rgba(245, 158, 11, 0.15) !important;
+        border-color: #F59E0B !important;
+        .cat-name {
+          color: #FBBF24 !important;
+        }
+      }
+    }
+  }
+
+  .destination-search-section {
+    .search-input-box {
+      background: #1E293B !important;
+      border-color: #334155 !important;
+
+      .destination-input {
+        color: #F8FAFC !important;
+      }
+    }
+
+    .suggestions-list-card {
+      background: #1E293B !important;
+      border-color: #334155 !important;
+
+      .suggestion-row {
+        border-color: #334155 !important;
+        &:hover, &:active {
+          background: #334155 !important;
+        }
+
+        .sugg-text-box {
+          .sugg-name {
+            color: #F8FAFC !important;
+          }
+          .sugg-details {
+            color: #94A3B8 !important;
+          }
+        }
+      }
+    }
+  }
+
+  .destination-selected-pill {
+    background: #334155 !important;
+    .pill-left .dest-name-text {
+      color: #F8FAFC !important;
+    }
+    .change-dest-link {
+      color: #60A5FA !important;
+    }
+  }
+
+  .trip-mode-toggle-row .mode-card {
+    background: #1E293B !important;
+    border-color: #334155 !important;
+    .mode-header strong {
+      color: #F8FAFC !important;
+    }
+    &.selected {
+      background: rgba(245, 158, 11, 0.15) !important;
+      border-color: #F59E0B !important;
+      strong {
+        color: #FBBF24 !important;
+      }
+    }
+  }
+
+  .schedule-pill-card,
+  .schedule-banner-row,
+  .payment-mode-selector-bar {
+    background: #1E293B !important;
+    border-color: #334155 !important;
+    color: #F8FAFC !important;
+
+    strong, .schedule-text, .selected-pay-name {
+      color: #F8FAFC !important;
+    }
+  }
+
+  .vehicle-option-card {
+    background: #1E293B !important;
+    border-color: #334155 !important;
+
+    .card-left-section .vehicle-title-box .name-info-row h3 {
+      color: #F8FAFC !important;
+    }
+    .card-right-section .fare-display {
+      color: #F8FAFC !important;
+    }
+    &.selected {
+      background: rgba(245, 158, 11, 0.15) !important;
+      border-color: #F59E0B !important;
+    }
+  }
+
+  .sticky-bottom-action-bar {
+    background: #1E293B !important;
+    border-color: #334155 !important;
+  }
+
+  .machinery-params-card {
+    background: #1E293B !important;
+    border-color: #334155 !important;
+    span {
+      color: #F8FAFC !important;
+    }
+    select {
+      background: #334155 !important;
+      color: #F8FAFC !important;
+      border-color: #475569 !important;
+    }
+  }
+
+  .bottom-sheet-dialog {
+    background: #1E293B !important;
+    color: #F8FAFC !important;
+    h2 {
+      color: #F8FAFC !important;
+    }
+  }
+
+  .wheel-picker-columns {
+    background: #0F172A !important;
+    border-color: #334155 !important;
+    .wheel-item {
+      color: #64748B !important;
+      &.active {
+        color: #F8FAFC !important;
+      }
+    }
+  }
+
+  .payment-options-list .pay-option-row {
+    background: #334155 !important;
+    border-color: #475569 !important;
+    .pay-left-row .pay-title {
+      color: #F8FAFC !important;
+    }
+  }
+}
+
+/* Bottom Nav Dark Mode */
+[data-theme="dark"] .bottom-nav,
+.bottom-nav.dark-mode {
+  background-color: #1E293B !important;
+  border-color: #334155 !important;
+
+  .nav-item {
+    color: #94A3B8 !important;
+
+    &.active {
+      color: #F59E0B !important;
+      svg {
+        stroke: #F59E0B !important;
+      }
+    }
+  }
 }

@@ -6,8 +6,10 @@ import { CustomerHeaderComponent } from '../../shared/components/customer-header
 import { BottomNavComponent } from '../../shared/components/bottom-nav/bottom-nav.component';
 import { BookingService } from '../../core/services/booking.service';
 import { CustomerService } from '../../core/services/customer.service';
+import { GoogleMapService, AutoCompletePlace } from '../../core/services/google-map.service';
 
 declare var L: any;
+declare var google: any;
 
 export interface LocationItem {
   name: string;
@@ -24,6 +26,11 @@ export interface LocationItem {
   styleUrl: './home.component.scss'
 })
 export class HomeComponent implements OnInit, OnDestroy {
+  private googleMapService = inject(GoogleMapService);
+  isDetectingGPS: boolean = false;
+  isSearchingPlaces: boolean = false;
+  googlePlacesSuggestions: AutoCompletePlace[] = [];
+  googleApiKey: string = '';
   private platformId = inject(PLATFORM_ID);
   
   activeTab: 'construction' | 'ride' = 'construction';
@@ -36,6 +43,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   searchQuery: string = '';
 
   map: any = null;
+  googleMap: any = null;
+  marker: any = null;
+  leafletMarker: any = null;
   currentLat: number = 12.9226;
   currentLng: number = 80.1275;
 
@@ -82,6 +92,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     this.loadRecentLocations();
     this.loadDynamicProducts();
+    this.loadBookingSettingsAndMapKey();
   }
 
   loadDynamicProducts(): void {
@@ -180,26 +191,44 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.loadRecentLocations();
   }
 
-  filterSearch(): void {
-    if (!this.searchQuery.trim()) {
+  async filterSearch(): Promise<void> {
+    const q = (this.searchQuery || '').trim();
+    if (!q) {
+      this.googlePlacesSuggestions = [];
+      this.isSearchingPlaces = false;
       this.filteredSuggestions = [...this.recentLocations];
       return;
     }
-    const q = this.searchQuery.toLowerCase();
+
+    const qLower = q.toLowerCase();
     this.filteredSuggestions = this.recentLocations.filter(s =>
-      s.name.toLowerCase().includes(q) || s.details.toLowerCase().includes(q)
+      s.name.toLowerCase().includes(qLower) || s.details.toLowerCase().includes(qLower)
     );
+
+    this.isSearchingPlaces = true;
+    try {
+      const places = await this.googleMapService.getPlaces(q, this.googleApiKey);
+      this.googlePlacesSuggestions = places || [];
+    } catch {
+      this.googlePlacesSuggestions = [];
+    } finally {
+      this.isSearchingPlaces = false;
+    }
   }
 
   clearSearch(): void {
     this.searchQuery = '';
+    this.googlePlacesSuggestions = [];
+    this.isSearchingPlaces = false;
     this.filterSearch();
   }
 
   selectLocationSuggestion(item: LocationItem): void {
-    this.searchQuery = item.name + (item.details ? ', ' + item.details : '');
-    this.workSiteDetails.address = item.name;
-    this.workSiteDetails.landmark = item.details;
+    const full = item.details ? (item.details.includes(item.name) ? item.details : item.name + ', ' + item.details) : item.name;
+    this.searchQuery = full;
+    this.workSiteDetails.address = full;
+    this.workSiteDetails.completeAddress = full;
+    this.workSiteDetails.landmark = item.name;
     this.currentLat = item.lat;
     this.currentLng = item.lng;
     this.addLocationToRecent(item);
@@ -209,45 +238,137 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   useCurrentGPSLocation(): void {
-    if (isPlatformBrowser(this.platformId) && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          this.currentLat = pos.coords.latitude;
-          this.currentLng = pos.coords.longitude;
-          const gpsItem: LocationItem = {
-            name: 'Current Location',
-            details: `GPS (${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)})`,
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude
-          };
-          this.searchQuery = gpsItem.name;
-          this.workSiteDetails.address = gpsItem.name;
-          this.addLocationToRecent(gpsItem);
-          this.locationStep = 'adjust_map';
-          setTimeout(() => this.initLeafletMap(), 150);
-        },
-        () => {
-          if (this.recentLocations.length > 0) {
-            this.selectLocationSuggestion(this.recentLocations[0]);
-          } else {
-            this.locationStep = 'adjust_map';
-            setTimeout(() => this.initLeafletMap(), 150);
-          }
-        }
-      );
-    } else {
+    if (!isPlatformBrowser(this.platformId) || !navigator.geolocation) {
       if (this.recentLocations.length > 0) {
         this.selectLocationSuggestion(this.recentLocations[0]);
-      } else {
+      }
+      return;
+    }
+
+    this.isDetectingGPS = true;
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        this.currentLat = lat;
+        this.currentLng = lng;
+
+        // Perform reverse geocoding to resolve real human-readable place and full address
+        const place = await this.googleMapService.getPlaceDetails(lat, lng);
+        this.isDetectingGPS = false;
+
+        const gpsItem: LocationItem = {
+          name: place.title,
+          details: place.address,
+          lat: lat,
+          lng: lng
+        };
+
+        this.searchQuery = place.address;
+        this.workSiteDetails.address = place.address;
+        this.workSiteDetails.completeAddress = place.address;
+        this.workSiteDetails.landmark = place.title;
+        this.selectedLocation = place.address;
+        this.addLocationToRecent(gpsItem);
+
+        // Persist to localStorage for booking flow and customer session
+        if (isPlatformBrowser(this.platformId)) {
+          localStorage.setItem('rentron_current_lat', lat.toString());
+          localStorage.setItem('rentron_current_lng', lng.toString());
+          localStorage.setItem('rentron_current_address', place.address);
+          localStorage.setItem('rentron_current_title', place.title);
+        }
+
         this.locationStep = 'adjust_map';
         setTimeout(() => this.initLeafletMap(), 150);
+      },
+      (err) => {
+        console.warn('Geolocation error:', err);
+        this.isDetectingGPS = false;
+        if (this.recentLocations.length > 0) {
+          this.selectLocationSuggestion(this.recentLocations[0]);
+        } else {
+          this.locationStep = 'adjust_map';
+          setTimeout(() => this.initLeafletMap(), 150);
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
       }
-    }
+    );
   }
 
   initLeafletMap(): void {
+    this.initMap();
+  }
+
+  initMap(): void {
     if (!isPlatformBrowser(this.platformId)) return;
 
+    const el = document.getElementById('homeMapContainer');
+    if (!el) return;
+
+    const win = window as any;
+    if (win.google && win.google.maps) {
+      this.initGoogleMap(el);
+    } else if (this.googleApiKey) {
+      this.googleMapService.loadGoogleMaps(this.googleApiKey)
+        .then(() => this.initGoogleMap(el))
+        .catch(() => this.initLeafletMapFallback(el));
+    } else {
+      this.initLeafletMapFallback(el);
+    }
+  }
+
+  private initGoogleMap(el: HTMLElement): void {
+    if (this.map) {
+      try { this.map.remove(); } catch (_) {}
+      this.map = null;
+    }
+
+    const latLng = new google.maps.LatLng(this.currentLat, this.currentLng);
+    this.googleMap = new google.maps.Map(el, {
+      center: latLng,
+      zoom: 17,
+      mapTypeId: google.maps.MapTypeId.ROADMAP,
+      streetViewControl: false,
+      mapTypeControl: false,
+      fullscreenControl: false,
+      zoomControl: true,
+      gestureHandling: 'greedy'
+    });
+
+    this.marker = new google.maps.Marker({
+      position: latLng,
+      map: this.googleMap,
+      draggable: true,
+      animation: google.maps.Animation.DROP,
+      title: 'Drag to adjust location'
+    });
+
+    // ONLY change location when the user explicitly moves the point / marker!
+    // Zooming in/out NEVER changes the coordinates or address.
+    this.marker.addListener('dragend', async () => {
+      const pos = this.marker.getPosition();
+      this.currentLat = pos.lat();
+      this.currentLng = pos.lng();
+      await this.updateAddressFromMarker(this.currentLat, this.currentLng);
+    });
+
+    // Clicking anywhere on the map also moves the marker point to that spot
+    this.googleMap.addListener('click', async (e: any) => {
+      if (e.latLng) {
+        this.currentLat = e.latLng.lat();
+        this.currentLng = e.latLng.lng();
+        this.marker.setPosition(e.latLng);
+        await this.updateAddressFromMarker(this.currentLat, this.currentLng);
+      }
+    });
+  }
+
+  private initLeafletMapFallback(el: HTMLElement): void {
     if (!document.getElementById('leaflet-css')) {
       const link = document.createElement('link');
       link.id = 'leaflet-css';
@@ -261,59 +382,80 @@ export class HomeComponent implements OnInit, OnDestroy {
         const script = document.createElement('script');
         script.id = 'leaflet-js';
         script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-        script.onload = () => this.buildMapInstance();
+        script.onload = () => this.buildLeafletMap(el);
         document.body.appendChild(script);
       }
     } else {
-      this.buildMapInstance();
+      this.buildLeafletMap(el);
     }
   }
 
-  buildMapInstance(): void {
-    const el = document.getElementById('homeMapContainer');
-    if (!el || typeof L === 'undefined') return;
-
+  private buildLeafletMap(el: HTMLElement): void {
     if (this.map) {
-      this.map.remove();
+      try { this.map.remove(); } catch (_) {}
       this.map = null;
     }
 
     this.map = L.map('homeMapContainer', {
       center: [this.currentLat, this.currentLng],
-      zoom: 15,
-      zoomControl: false
+      zoom: 16,
+      zoomControl: true
     });
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '© OpenStreetMap'
+      maxZoom: 19
     }).addTo(this.map);
 
-    this.map.on('moveend', () => {
-      const center = this.map.getCenter();
-      this.currentLat = center.lat;
-      this.currentLng = center.lng;
-      this.updateAddressFromCenter(center.lat, center.lng);
+    const marker = L.marker([this.currentLat, this.currentLng], { draggable: true }).addTo(this.map);
+    this.leafletMarker = marker;
+
+    // ONLY update on marker dragend or click - NOT on zoom or map move
+    marker.on('dragend', async () => {
+      const pos = marker.getLatLng();
+      this.currentLat = pos.lat;
+      this.currentLng = pos.lng;
+      await this.updateAddressFromMarker(this.currentLat, this.currentLng);
+    });
+
+    this.map.on('click', async (e: any) => {
+      this.currentLat = e.latlng.lat;
+      this.currentLng = e.latlng.lng;
+      marker.setLatLng(e.latlng);
+      await this.updateAddressFromMarker(this.currentLat, this.currentLng);
     });
   }
 
-  updateAddressFromCenter(lat: number, lng: number): void {
-    const nearest = this.recentLocations.find(
-      s => Math.abs(s.lat - lat) < 0.02 && Math.abs(s.lng - lng) < 0.02
-    );
-    if (nearest) {
-      this.workSiteDetails.address = nearest.name;
-      this.searchQuery = nearest.name + (nearest.details ? ', ' + nearest.details : '');
-    } else {
-      const addr = `Work Site (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
-      this.workSiteDetails.address = addr;
-      this.searchQuery = addr;
+  async updateAddressFromMarker(lat: number, lng: number): Promise<void> {
+    const place = await this.googleMapService.getPlaceDetails(lat, lng, this.googleApiKey);
+    this.workSiteDetails.address = place.address;
+    this.workSiteDetails.completeAddress = place.address;
+    this.workSiteDetails.landmark = place.title;
+    this.searchQuery = place.address;
+    this.selectedLocation = place.address;
+
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.setItem('rentron_current_lat', lat.toString());
+      localStorage.setItem('rentron_current_lng', lng.toString());
+      localStorage.setItem('rentron_current_address', place.address);
+      localStorage.setItem('rentron_current_title', place.title);
+      localStorage.setItem('latitude', lat.toString());
+      localStorage.setItem('longitude', lng.toString());
+      localStorage.setItem('title', place.title);
+      localStorage.setItem('FullAddress', place.address);
     }
   }
 
   recenterMap(): void {
-    if (this.map) {
+    if (this.googleMap && this.marker) {
+      const latLng = new google.maps.LatLng(this.currentLat, this.currentLng);
+      this.googleMap.panTo(latLng);
+      this.googleMap.setZoom(17);
+      this.marker.setPosition(latLng);
+    } else if (this.map) {
       this.map.setView([this.currentLat, this.currentLng], 16);
+      if (this.leafletMarker) {
+        this.leafletMarker.setLatLng([this.currentLat, this.currentLng]);
+      }
     }
   }
 
@@ -368,4 +510,60 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.map = null;
     }
   }
+
+  loadBookingSettingsAndMapKey(): void {
+    this.bookingService.getBookingSettings().subscribe({
+      next: (res) => {
+        if (res && res.data && res.data.mapKey) {
+          this.googleApiKey = res.data.mapKey;
+          if (isPlatformBrowser(this.platformId)) {
+            this.googleMapService.loadGoogleMaps(this.googleApiKey);
+          }
+        }
+      }
+    });
+  }
+
+  async selectGooglePlace(place: AutoCompletePlace): Promise<void> {
+    this.searchQuery = place.address;
+    this.workSiteDetails.address = place.address;
+    this.workSiteDetails.completeAddress = place.address;
+    this.workSiteDetails.landmark = place.title;
+    this.selectedLocation = place.address;
+
+    let lat = place.lat;
+    let lng = place.lng;
+
+    if (!lat || !lng) {
+      const coords = await this.googleMapService.geoCode(place.address, this.googleApiKey);
+      lat = coords.lat;
+      lng = coords.lng;
+    }
+
+    this.currentLat = lat;
+    this.currentLng = lng;
+
+    const item: LocationItem = {
+      name: place.title,
+      details: place.address,
+      lat: lat,
+      lng: lng
+    };
+    this.addLocationToRecent(item);
+
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.setItem('rentron_current_lat', lat.toString());
+      localStorage.setItem('rentron_current_lng', lng.toString());
+      localStorage.setItem('rentron_current_address', place.address);
+      localStorage.setItem('rentron_current_title', place.title);
+      localStorage.setItem('latitude', lat.toString());
+      localStorage.setItem('longitude', lng.toString());
+      localStorage.setItem('title', place.title);
+      localStorage.setItem('FullAddress', place.address);
+    }
+
+    this.locationStep = 'adjust_map';
+    setTimeout(() => this.initLeafletMap(), 150);
+  }
+
 }

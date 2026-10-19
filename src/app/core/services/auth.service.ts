@@ -37,6 +37,7 @@ export class AuthService {
 
         if (token) {
           this.setSession(token, refreshToken, user);
+          this.registerDeviceToken(user?.id);
         }
       })
     );
@@ -103,4 +104,26 @@ export class AuthService {
     localStorage.removeItem('customer_refresh_token');
     localStorage.removeItem('customer_user_info');
   }
+
+  registerDeviceToken(userId?: number): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    let did = localStorage.getItem('rentron_device_id');
+    if (!did) {
+      did = 'dev_' + Math.random().toString(36).substring(2, 12) + '_' + Date.now();
+      localStorage.setItem('rentron_device_id', did);
+    }
+    const token = 'fcm_' + did;
+    const body: any = {
+      deviceToken: token,
+      platform: 'WEB',
+      deviceId: did
+    };
+    if (userId) body.userId = String(userId);
+
+    this.http.post<any>(`${this.baseUrl}/api/v1/notifications/devices/register`, body).subscribe({
+      next: (res) => console.log('Customer device token registered for push:', res),
+      error: (err) => console.warn('Customer device token registration error:', err)
+    });
+  }
+
 }

@@ -126,6 +126,10 @@ export interface Booking {
   scheduledPickupAt?: string;
   returnAt?: string;
   pickupAddressText?: string;
+  stopAddressText?: string;
+  stopAddress?: string;
+  stopLatitude?: number;
+  stopLongitude?: number;
   destinationAddressText?: string;
   pickupLatitude?: number;
   pickupLongitude?: number;
@@ -168,6 +172,7 @@ export interface LiveTrackingData {
   driverLongitude?: number;
   driverRating?: number;
   vehicleType?: string;
+  vehicleRegistration?: string;
   locationUpdatedAt?: string;
 }
 
@@ -363,6 +368,10 @@ export class BookingService {
    * 12. Razorpay Order Creation
    * POST /api/v1/payments/create-order
    */
+  getBookingSettings(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(`${this.baseUrl}/api/v1/settings/booking`);
+  }
+
   createRazorpayOrder(bookingId: number | string): Observable<ApiResponse<{
     orderId: string;
     amount: number;
@@ -384,6 +393,18 @@ export class BookingService {
     razorpaySignature: string;
   }): Observable<ApiResponse<string>> {
     return this.http.post<ApiResponse<string>>(`${this.baseUrl}/api/v1/payments/verify-signature`, payload);
+  }
+
+  /**
+   * Search nearby active drivers around coordinates
+   * GET /api/v1/drivers/search-nearby
+   */
+  searchNearbyDrivers(latitude: number, longitude: number, radiusKm: number = 25.0, vehicleType?: string): Observable<ApiResponse<any[]>> {
+    let url = `${this.baseUrl}/api/v1/drivers/search-nearby?latitude=${latitude}&longitude=${longitude}&radiusKm=${radiusKm}`;
+    if (vehicleType) {
+      url += `&vehicleType=${encodeURIComponent(vehicleType)}`;
+    }
+    return this.http.get<ApiResponse<any[]>>(url);
   }
 
   // Fallback Machinery Catalog helper

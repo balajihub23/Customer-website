@@ -1,117 +1,474 @@
-<div class="track-page">
-  <!-- Top Header -->
-  <header class="page-header">
-    <h1 class="header-title">Live Tracking</h1>
-    <div class="header-tools" *ngIf="booking">
-      <span class="booking-num-badge">{{ booking.bookingNumber }}</span>
-    </div>
-  </header>
+<div class="track-page-container">
 
-  <!-- Active Tracking View -->
-  <div *ngIf="hasActiveJob; else emptyTracking" class="active-tracking-container animate-fade-in">
-    
-    <!-- Top Floating Driver Card -->
-    <div class="floating-operator-card">
-      <div class="op-left">
-        <div class="op-photo-avatar">🚖</div>
-        <div class="op-info">
-          <h3 class="op-name">{{ liveTracking?.driverName || 'Assigned Driver' }}</h3>
-          <p class="op-veh">{{ liveTracking?.vehicleType || 'Sedan Taxi' }} • ⭐ {{ liveTracking?.driverRating || '4.9' }}</p>
-          <span class="status-chip green">{{ booking?.status?.replace('_', ' ') || 'ON THE WAY' }}</span>
+  <!-- ======================================================== -->
+  <!-- STATE 1: RADAR SEARCHING (Screenshot 3 left) -->
+  <!-- ======================================================== -->
+  <div *ngIf="radarState === 'SEARCHING'" class="radar-searching-view animate-fade-in">
+    <header class="page-top-bar">
+      <button class="back-link-btn" (click)="goHome()">←</button>
+      <h1 class="page-title">Finding Available Vehicles</h1>
+    </header>
+
+    <!-- Radar Graphic Card -->
+    <div class="radar-card">
+      <div class="radar-circle-animation">
+        <div class="radar-ripple r1"></div>
+        <div class="radar-ripple r2"></div>
+        <div class="radar-ripple r3"></div>
+        <div class="radar-center-bubble">
+          <span class="center-icon">🚗</span>
+          <span class="center-label">Your Location</span>
         </div>
+        <!-- Orbiting cabs -->
+        <span class="orbiting-cab cab-1">🚕</span>
+        <span class="orbiting-cab cab-2">🚖</span>
+        <span class="orbiting-cab cab-3">🚕</span>
+        <span class="orbiting-cab cab-4">🚗</span>
       </div>
-      <div class="op-right">
-        <span class="eta-time">Live</span>
-        <span class="eta-label">Tracking</span>
-      </div>
-    </div>
-
-    <!-- Leaflet Live Map Canvas -->
-    <div id="liveTrackingMap" class="full-live-map"></div>
-
-    <!-- Ride Start OTP Notification if present -->
-    <div *ngIf="booking?.otp" class="track-otp-card">
-      <span>Ride Start PIN:</span>
-      <strong>{{ booking?.otp }}</strong>
+      <div class="radar-meta-badge">Radius: 15 km</div>
     </div>
 
-    <!-- Bottom Floating Location & Actions Card -->
-    <div class="floating-bottom-card">
-      <div class="destination-row">
-        <div class="dest-icon-badge">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2">
-            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-            <circle cx="12" cy="10" r="3"/>
-          </svg>
-        </div>
-        <div class="dest-meta">
-          <span class="heading-label">Destination</span>
-          <h4 class="site-title">{{ booking?.destinationAddressText || 'Destination Site' }}</h4>
-        </div>
+    <!-- Contacting Drivers Card -->
+    <div class="contacting-drivers-card">
+      <h3 class="card-headline">Contacting Drivers Nearby...</h3>
+      <div class="progress-bar-track">
+        <div class="progress-bar-animated-fill"></div>
       </div>
 
-      <div class="action-buttons-grid">
-        <a *ngIf="liveTracking?.driverPhone" [href]="'tel:' + liveTracking?.driverPhone" class="btn-action call">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-          </svg>
-          <span>Call Driver</span>
-        </a>
+      <div class="driver-illustration-box">
+        <div class="driver-avatar-circle">👨‍✈️</div>
+        <p class="waiting-subtext">Waiting for acceptance</p>
+      </div>
+    </div>
 
-        <button class="btn-action message" (click)="goToBookings()">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-          </svg>
-          <span>Trip Details</span>
+    <!-- Bottom Cancel Action -->
+    <div class="bottom-action-container">
+      <button class="cancel-search-btn" (click)="openCancelReasons()">✕ Cancel Ride</button>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- STATE 2: NO DRIVERS AVAILABLE (Screenshot 3 center/right) -->
+  <!-- ======================================================== -->
+  <div *ngIf="radarState === 'NO_DRIVERS'" class="no-drivers-view animate-fade-in">
+    <header class="page-top-bar">
+      <button class="back-link-btn" (click)="goHome()">←</button>
+      <h1 class="page-title">NO DRIVERS AVAILABLE</h1>
+    </header>
+
+    <!-- Radar with Retry in Center -->
+    <div class="radar-card">
+      <div class="radar-circle-animation static-radar">
+        <div class="radar-ripple r1"></div>
+        <div class="radar-ripple r2"></div>
+        <button class="radar-retry-center" (click)="retrySearchWithTip()">
+          <span class="retry-spin-icon">🔄</span>
         </button>
       </div>
+      <div class="radar-status-row">
+        <span class="status-dot orange"></span>
+        <span class="status-name">Try Again</span>
+        <span class="radar-meta-badge inline">Radius: 15 km</span>
+      </div>
     </div>
-  </div>
 
-  <!-- Empty Tracking View -->
-  <ng-template #emptyTracking>
-    <div class="empty-tracking-container animate-fade-in">
-      <div class="pulse-pin-wrapper">
-        <div class="pulse-ring"></div>
-        <div class="pin-circle">
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
-            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-            <circle cx="12" cy="10" r="3"/>
-          </svg>
-        </div>
+    <!-- Alert Box -->
+    <div class="no-drivers-alert-box">
+      <div class="alert-icon">⚠️</div>
+      <div class="alert-content">
+        <strong>NO DRIVERS AVAILABLE</strong>
+        <p>No nearby drivers found for your current request</p>
+      </div>
+    </div>
+
+    <!-- Tip / Add-on Amount Card -->
+    <div class="addon-amount-card">
+      <div class="coin-icon-bubble">🪙</div>
+      <p class="quicker-subtext">Improve your chances of quicker ride confirmation!</p>
+      <strong class="addon-title">Enter Add On amount</strong>
+
+      <div class="addon-chips-row">
+        @for (amt of addonTipOptions; track amt) {
+        <button 
+          class="tip-chip-btn" 
+          [class.selected]="selectedAddonTip === amt" 
+          (click)="selectAddonTip(amt)">
+          ₹{{ amt }}
+        </button>
+        }
       </div>
 
-      <h2 class="empty-title">No Active Ride to Track</h2>
-      <p class="empty-subtitle">
-        You don't have an ongoing ride right now. Live tracking starts automatically once a driver is assigned to your booking.
-      </p>
-
-      <div class="info-notice-card">
-        <div class="info-icon">💡</div>
-        <div class="info-text">
-          <strong>Looking for a scheduled booking?</strong>
-          <p>Scheduled rides will appear in your Bookings tab and switch to live tracking 10 mins before pickup.</p>
-        </div>
-      </div>
-
-      <button class="view-bookings-cta-btn" (click)="goToBookings()">
-        View All Bookings ➔
+      <button class="try-again-yellow-btn" (click)="retrySearchWithTip()">
+        Try Again
       </button>
     </div>
-  </ng-template>
+  </div>
 
-  <!-- Driver Arrived Notification Banner -->
-  <div *ngIf="showArrivedNotification" class="arrived-popup-banner animate-slide-up">
-    <div class="arrived-content">
-      <span class="arrived-bell">🔔</span>
-      <div>
-        <strong>Your Driver has Arrived!</strong>
-        <p>The vehicle is at your pickup location. Please board within 5 minutes.</p>
+  <!-- ======================================================== -->
+  <!-- STATE 3: YOUR RIDE IS CONFIRMED (Screenshot 4) -->
+  <!-- ======================================================== -->
+  <div *ngIf="radarState === 'CONFIRMED'" class="ride-confirmed-view animate-fade-in">
+    <header class="page-top-bar">
+      <button class="back-link-btn" (click)="goHome()">←</button>
+      <h1 class="page-title">Your Ride Is Confirmed</h1>
+    </header>
+
+    <!-- Map Canvas -->
+    <div class="confirmed-map-wrapper">
+      <div id="liveTrackingMap" class="full-live-map"></div>
+
+      <!-- Floating Ride Start OTP Badge (Screenshot 4 left) -->
+      <div class="floating-otp-pill">
+        <div class="otp-number">{{ booking?.otp || '2024' }}</div>
+        <div class="otp-caption">Ride Start OTP</div>
       </div>
-      <button (click)="closeArrivedNotification()">✕</button>
+
+      <!-- Recenter Map Button -->
+      <button class="recenter-btn" (click)="recenterTrackingMap()" title="Recenter Map">
+        📍
+      </button>
+    </div>
+
+    <!-- Driver Arrived Alert Banner (Step 3) -->
+    <div *ngIf="booking?.status === 'ARRIVED' || showArrivedNotification" class="driver-arrived-alert animate-slide-up">
+      <div class="arrived-icon">🔔</div>
+      <div class="arrived-text">
+        <strong>Driver has arrived!</strong>
+        <p>Please share OTP <strong>{{ booking?.otp || '2024' }}</strong> with driver to start the ride.</p>
+      </div>
+      <button class="arrived-close" (click)="closeArrivedNotification()">✕</button>
+    </div>
+
+    <!-- Driver & Vehicle Details Sheet -->
+    <div class="driver-details-sheet animate-slide-up">
+      <!-- Driver Heading Banner (Which stop driver is coming to) -->
+      <div *ngIf="driverHeadingMessage" class="driver-heading-banner animate-fade-in">
+        <span class="pulse-indicator-dot"></span>
+        <span class="heading-text">{{ driverHeadingMessage }}</span>
+      </div>
+      <div class="driver-header-row">
+        <div class="vehicle-specs">
+          <h2 class="vehicle-plate">{{ driverVehiclePlate }}</h2>
+          <p class="vehicle-model">{{ driverVehicleModel }}</p>
+        </div>
+        <div class="driver-profile-pill">
+          <div class="driver-avatar-img">👨‍✈️</div>
+          <div class="driver-name-rating">
+            <strong>{{ driverName }}</strong>
+            <span class="rating-badge">★ {{ driverRating }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- In-app chat input -->
+      <div class="chat-input-row">
+        <input 
+          type="text" 
+          class="message-driver-input" 
+          placeholder="Message your driver..." 
+          [(ngModel)]="driverChatMessage"
+          (keyup.enter)="sendChatMessage()" />
+        <button class="send-msg-btn" (click)="sendChatMessage()" title="Send">✈️</button>
+      </div>
+      <div *ngIf="chatSentNotification" class="chat-sent-toast">Message sent to driver!</div>
+
+      <!-- Trip Details Button -->
+      <button class="trip-details-pill-btn" (click)="openTripDetails()">
+        Trip Details
+      </button>
+
+      <!-- Estimated Fare Row -->
+      <div class="estimated-fare-row">
+        <div class="fare-info">
+          <span class="fare-label">Estimated Fare</span>
+          <h3 class="fare-amount">₹{{ booking?.estimatedFare || 101 }}</h3>
+          <p class="cash-subtext">Make sure of having exact change</p>
+        </div>
+        <div class="payment-method-chip">
+          <span class="pay-dot green"></span>
+          <strong>{{ booking?.paymentMethod || 'Cash' }}</strong>
+          <span class="change-link">Change</span>
+        </div>
+      </div>
+
+      <!-- Driver Tip Support Card -->
+      <div class="driver-tip-support-card">
+        <p class="tip-message">Support your driver with a tip. A little goes a long way during these tough times.</p>
+        <button class="green-tip-btn" (click)="retrySearchWithTip()">₹ Tip</button>
+      </div>
     </div>
   </div>
 
-  <!-- Bottom Navigation -->
-  <app-bottom-nav activeTab="TRACK"></app-bottom-nav>
+  <!-- ======================================================== -->
+  <!-- STATE 4: BOOKING CANCELLED (Screenshot 5 far right) -->
+  <!-- ======================================================== -->
+  <div *ngIf="radarState === 'CANCELLED'" class="booking-cancelled-view animate-fade-in">
+    <div class="cancelled-center-card">
+      <div class="yellow-checkmark-circle">✓</div>
+      <h2 class="cancelled-title">Booking Cancelled</h2>
+      <p class="cancelled-subtext">
+        Your booking with CRN{{ booking?.bookingNumber || '11385407579' }} has been cancelled successfully.
+      </p>
+      <button class="book-another-ride-btn" (click)="bookAnotherRide()">
+        Book Another Ride
+      </button>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: TRIP DETAILS (Screenshot 5 left) -->
+  <!-- ======================================================== -->
+  <div *ngIf="showTripDetailsSheet" class="modal-backdrop-overlay" (click)="closeTripDetails()">
+    <div class="trip-details-sheet animate-slide-up" (click)="$event.stopPropagation()">
+      <div class="sheet-drag-handle"></div>
+      <h2 class="sheet-title">Trip Details</h2>
+
+      <div class="trip-addresses-list">
+        <div class="addr-row">
+          <span class="dot green-dot"></span>
+          <div class="addr-text">{{ booking?.pickupAddressText || 'W4CR+PGH, Camp Road Junction, Selaiyur, Chennai' }}</div>
+        </div>
+        <div class="addr-row">
+          <span class="dot red-dot"></span>
+          <div class="addr-text">{{ booking?.destinationAddressText || 'Chennai International Airport Domestic Terminal' }}</div>
+          <button class="edit-link-btn">Edit</button>
+        </div>
+      </div>
+
+      <button class="red-cancel-ride-btn" (click)="openCancelReasons()">Cancel Ride</button>
+      <button class="yellow-close-btn" (click)="closeTripDetails()">Close</button>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: CANCEL REASONS (Screenshot 5 center) -->
+  <!-- ======================================================== -->
+  <div *ngIf="showCancelReasonSheet" class="modal-backdrop-overlay" (click)="closeCancelReasons()">
+    <div class="cancel-reasons-sheet animate-slide-up" (click)="$event.stopPropagation()">
+      <div class="sheet-drag-handle"></div>
+      <h2 class="sheet-title">Cancel Ride</h2>
+      <p class="sheet-sub">Are you sure you want to cancel this Ride ?</p>
+
+      <div class="reasons-pills-list">
+        @for (reason of cancellationReasons; track reason) {
+        <button 
+          class="reason-pill-btn" 
+          [class.active]="selectedCancelReason === reason" 
+          (click)="selectCancelReason(reason)">
+          {{ reason }}
+        </button>
+        }
+      </div>
+
+      <button class="go-back-btn" (click)="closeCancelReasons()">Go Back</button>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: DRIVER NEAR WARNING (Screenshot 5 second from right) -->
+  <!-- ======================================================== -->
+  <div *ngIf="showDriverNearWarning" class="modal-backdrop-overlay" (click)="showDriverNearWarning = false">
+    <div class="driver-near-sheet animate-slide-up" (click)="$event.stopPropagation()">
+      <div class="sheet-drag-handle"></div>
+      <div class="driver-near-header">
+        <div class="near-text">
+          <h2 class="near-title">Ramesh will reach in less than 4 min</h2>
+          <p class="near-sub">Are you sure you want to cancel the ride?</p>
+        </div>
+        <div class="driver-near-avatar">👨‍✈️</div>
+      </div>
+
+      <div class="near-actions-column">
+        <button class="yellow-action-btn" (click)="findAnotherDriver()">Find Another Driver</button>
+        <button class="red-outline-btn" (click)="confirmFinalCancellation()">Cancel Ride</button>
+        <button class="go-back-link-btn" (click)="showDriverNearWarning = false">Go Back</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ======================================================== -->
+  <!-- STATE 5: SCHEDULED RIDE VIEW (Figma Screen 6 & Schedule) -->
+  <!-- ======================================================== -->
+  <div *ngIf="radarState === 'SCHEDULED'" class="scheduled-ride-view animate-fade-in">
+    <header class="page-top-bar">
+      <button class="back-link-btn" (click)="goHome()">←</button>
+      <h1 class="page-title">Ride Scheduled</h1>
+    </header>
+
+    <div class="scheduled-info-card">
+      <div class="scheduled-badge-top">
+        <span class="sched-icon">📅</span>
+        <div class="sched-meta">
+          <strong>Pickup Scheduled</strong>
+          <span>{{ booking?.scheduledPickupAt | date:'medium' }}</span>
+        </div>
+      </div>
+
+      <div class="scheduled-route-box">
+        <div class="route-item">
+          <span class="dot green-dot"></span>
+          <div class="route-details">
+            <span class="label">Pickup</span>
+            <span class="address">{{ booking?.pickupAddressText || 'Pickup Location' }}</span>
+          </div>
+        </div>
+
+        <div *ngIf="booking?.stopAddressText" class="route-item stop-item">
+          <span class="dot orange-dot"></span>
+          <div class="route-details">
+            <span class="label">Intermediate Stop</span>
+            <span class="address">{{ booking?.stopAddressText }}</span>
+          </div>
+        </div>
+
+        <div class="route-item">
+          <span class="dot red-dot"></span>
+          <div class="route-details">
+            <span class="label">Destination</span>
+            <span class="address">{{ booking?.destinationAddressText || 'Destination' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="scheduled-notice-box">
+        <span class="info-ico">ℹ️</span>
+        <p *ngIf="!isScheduledDateReached">Driver live tracking will automatically enable on your scheduled date. Driver details will be shared 10-15 minutes prior to pickup.</p>
+        <p *ngIf="isScheduledDateReached" style="color: #059669; font-weight: 700; margin: 0;">Pickup time reached! Live driver tracking is now enabled.</p>
+      </div>
+
+      <div class="scheduled-actions">
+        <button *ngIf="isScheduledDateReached" class="live-track-btn animate-pulse" (click)="radarState = 'SEARCHING'; startSearchTimeout()">
+          ⚡ View Live Driver Tracking
+        </button>
+        <button class="cancel-scheduled-btn" (click)="cancelScheduledRide()">✕ Cancel Scheduled Ride</button>
+        <button class="home-btn" (click)="goHome()">← Back to Home</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- STATE 6: PAY FOR RIDE (Figma Screen 5 - Step 3)          -->
+  <!-- ======================================================== -->
+  <div *ngIf="radarState === 'PAY_FOR_RIDE'" class="pay-for-ride-view animate-fade-in">
+    <header class="page-top-bar">
+      <button class="back-link-btn" (click)="goHome()">←</button>
+      <h1 class="page-title">Pay For Ride</h1>
+    </header>
+
+    <div class="pay-content-container">
+      <!-- You've Arrived Banner -->
+      <div class="arrived-celebration-card">
+        <div class="green-check-badge">✓</div>
+        <div class="arrived-title-col">
+          <h2>You've Arrived!</h2>
+          <p>{{ booking?.destinationAddressText || 'Destination' }}</p>
+        </div>
+      </div>
+
+      <!-- Add Tip for Driver -->
+      <div class="driver-tip-selector-card">
+        <div class="tip-header-row">
+          <strong>Add a tip for {{ driverName }}</strong>
+          <span class="hundred-pct">100% goes to driver</span>
+        </div>
+        <div class="tip-chips-row">
+          <button class="tip-chip" [class.selected]="selectedDriverTip === 20" (click)="selectDriverTip(20)">₹20</button>
+          <button class="tip-chip" [class.selected]="selectedDriverTip === 30" (click)="selectDriverTip(30)">₹30</button>
+          <button class="tip-chip" [class.selected]="selectedDriverTip === 50" (click)="selectDriverTip(50)">₹50</button>
+          <button class="tip-chip" [class.selected]="selectedDriverTip === 0" (click)="selectDriverTip(0)">Custom</button>
+        </div>
+      </div>
+
+      <!-- Amount to Pay -->
+      <div class="amount-to-pay-card">
+        <div class="amount-header-row">
+          <span class="label">AMOUNT TO PAY</span>
+          <span class="taxes-label">Inclusive of all taxes</span>
+        </div>
+        <div class="total-big-fare">
+          ₹{{ (booking?.totalAmount || booking?.estimatedFare || 385) + selectedDriverTip }}
+        </div>
+
+        <div class="fare-breakdown-details">
+          <div class="fare-line"><span>Base Fare</span> <span>₹{{ booking?.baseAmount || 120 }}</span></div>
+          <div class="fare-line"><span>Distance & Time</span> <span>₹{{ booking?.distanceAmount || 235 }}</span></div>
+          <div class="fare-line"><span>Taxes & Toll Fees</span> <span>₹{{ booking?.taxAmount || 30 }}</span></div>
+          <div *ngIf="selectedDriverTip > 0" class="fare-line tip-line"><span>Driver Tip added</span> <span>+₹{{ selectedDriverTip }}</span></div>
+        </div>
+      </div>
+
+      <button class="primary-yellow-cta-btn full-width pay-btn-large" (click)="processPayment()">
+        Pay ₹{{ (booking?.totalAmount || booking?.estimatedFare || 385) + selectedDriverTip }} →
+      </button>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- STATE 7: PAYMENT DONE (Figma Screen 5 - Step 4)          -->
+  <!-- ======================================================== -->
+  <div *ngIf="radarState === 'PAYMENT_DONE'" class="payment-done-view animate-fade-in">
+    <div class="payment-done-center-card">
+      <div class="yellow-done-circle">✓</div>
+      <h2 class="done-title">Payment Done</h2>
+      <p class="done-sub">Your payment has been received successfully.</p>
+      <button class="primary-yellow-cta-btn full-width" (click)="finishPaymentAndRate()">Done</button>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- STATE 8: TRIP COMPLETED & RATING (Figma Screen 5 - Step 5) -->
+  <!-- ======================================================== -->
+  <div *ngIf="radarState === 'RATING'" class="trip-rating-view animate-fade-in">
+    <header class="page-top-bar">
+      <h1 class="page-title">Trip Completed</h1>
+    </header>
+
+    <div class="rating-content-card">
+      <div class="driver-summary-header">
+        <div class="vehicle-specs">
+          <h2>{{ driverVehiclePlate || 'TS 34 T 7080' }}</h2>
+          <p>{{ driverVehicleModel || 'White Toyota Innova' }}</p>
+        </div>
+        <div class="driver-avatar-box">👨‍✈️</div>
+      </div>
+
+      <div class="stars-rating-section">
+        <h3>How was your ride with {{ driverName }}?</h3>
+        <div class="stars-row">
+          <span 
+            *ngFor="let s of [1, 2, 3, 4, 5]" 
+            class="star-icon" 
+            [class.filled]="s <= driverRatingScore"
+            (click)="setDriverRating(s)">
+            ★
+          </span>
+        </div>
+      </div>
+
+      <textarea 
+        class="rating-note-textarea" 
+        rows="3" 
+        placeholder="Leave a note for {{ driverName }} (optional)..." 
+        [(ngModel)]="driverRatingNote">
+      </textarea>
+
+      <div class="paid-summary-pill">
+        <span class="check-ico">●</span>
+        <span>Paid successfully <strong>₹{{ (booking?.totalAmount || 385) + selectedDriverTip }}</strong></span>
+      </div>
+
+      <div class="rating-action-links">
+        <button class="action-link-pill">📄 Invoice</button>
+        <button class="action-link-pill">🛡 Ride Safety</button>
+      </div>
+
+      <button class="primary-yellow-cta-btn full-width" (click)="submitRatingAndComplete()">
+        Submit & Done
+      </button>
+    </div>
+  </div>
+
+  <!-- Global Bottom Navigation -->
+  <app-bottom-nav activeTab="track"></app-bottom-nav>
 </div>

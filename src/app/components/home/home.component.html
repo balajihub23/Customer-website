@@ -1,23 +1,21 @@
 <div class="home-container">
   <!-- Top App Header -->
-  <app-customer-header 
-    [currentLocation]="selectedLocation" 
-    [userName]="userName"
+  <app-customer-header [currentLocation]="selectedLocation" [userName]="userName"
     (onLocationClick)="openLocationModal()">
   </app-customer-header>
 
   <!-- Quick Services Category Pills (Daily Rides | Rentals | Outstation) -->
-  <div class="quick-service-pills-row">
+  <!-- <div class="quick-service-pills-row">
     <button class="service-pill-btn" (click)="openCategory('DAILY_RIDES')">
       <span>🚖</span> Daily Rides
     </button>
     <button class="service-pill-btn" (click)="openCategory('RENTALS')">
       <span>⏳</span> Rentals
     </button>
-    <button class="service-pill-btn" (click)="openCategory('OUTSTATION')">
+    <button class="service-pill-btn" (click)="openCategory('DAILY_RIDES')">
       <span>🏔️</span> Outstation
     </button>
-  </div>
+  </div> -->
 
   <!-- Category Selection Cards (Construction vs Ride) -->
   <div class="category-cards-grid">
@@ -40,7 +38,7 @@
         <span class="category-badge">Instant Transport pick-up</span>
       </div>
       <p class="category-subtitle">Outstation • Rentals • City Cabs</p>
-      <button class="action-yellow-btn" (click)="openCategory('OUTSTATION')">
+      <button class="action-yellow-btn" (click)="openCategory('DAILY_RIDES')">
         Book Ride ➔
       </button>
     </div>
@@ -80,7 +78,7 @@
 
   <!-- Work Site Location Modal / Sheet (Matches Figma Screenshots 1 & 2) -->
   <div *ngIf="showLocationModal" class="location-modal-overlay">
-    
+
     <!-- STEP 1: Enter Work Site Location View (Figma Screen 2) -->
     <div *ngIf="locationStep === 'search'" class="location-search-full-screen animate-fade-in">
       <header class="location-search-header">
@@ -89,32 +87,61 @@
         <span class="spacer"></span>
       </header>
 
+      <!-- Search Input: Type any area, street or place -->
       <div class="search-input-wrapper">
         <span class="search-icon">🔍</span>
         <input 
           type="text" 
           [(ngModel)]="searchQuery" 
-          (input)="filterSearch()"
-          placeholder="Enter Address" 
-          class="search-input"
-        />
+          (input)="filterSearch()" 
+          placeholder="Enter area, street name or landmark..."
+          class="search-input" />
         <button *ngIf="searchQuery" class="clear-btn" (click)="clearSearch()">⊗</button>
       </div>
 
-      <!-- Current Location Option -->
-      <div class="current-location-option" (click)="useCurrentGPSLocation()">
-        <span class="target-gps-icon">🎯</span>
-        <span class="option-text">Current Location</span>
+      <!-- Current Location Option (GPS Geolocation) -->
+      <div class="current-location-option" [class.detecting]="isDetectingGPS" (click)="useCurrentGPSLocation()">
+        <span class="target-gps-icon">{{ isDetectingGPS ? '⏳' : '🎯' }}</span>
+        <div class="current-loc-col">
+          <span class="option-text">{{ isDetectingGPS ? 'Locating your exact address...' : 'Use Current Location' }}</span>
+          <small class="option-sub">Detect via device GPS sensor</small>
+        </div>
       </div>
 
-      <!-- Recent Search History Title -->
-      <div class="recent-header-row" *ngIf="recentLocations.length > 0">
-        <span class="recent-label">RECENT SEARCHES</span>
+      <!-- Live Places Searching Indicator -->
+      <div *ngIf="isSearchingPlaces" class="places-searching-indicator animate-fade-in">
+        <span class="spinner-sm"></span> Searching places for "{{ searchQuery }}"...
       </div>
 
-      <!-- Dynamic Recent Locations List (No Hardcoding) -->
-      <div class="suggestions-list" *ngIf="filteredSuggestions.length > 0">
-        @for (item of filteredSuggestions; track item.name; let i = $index) {
+      <!-- LIVE AUTOCOMPLETE PLACES LIST (Shown when typing) -->
+      <div class="places-autocomplete-list animate-slide-up" *ngIf="searchQuery && searchQuery.trim().length > 0">
+        <div class="section-micro-label">MATCHING PLACES</div>
+        
+        <div 
+          *ngFor="let place of googlePlacesSuggestions" 
+          class="place-suggestion-item" 
+          (click)="selectGooglePlace(place)">
+          <span class="place-pin-icon">📍</span>
+          <div class="place-text-box">
+            <strong class="place-main-title">{{ place.title }}</strong>
+            <p class="place-full-address">{{ place.address }}</p>
+          </div>
+          <span class="select-arrow-hint">➔</span>
+        </div>
+
+        <div *ngIf="!isSearchingPlaces && googlePlacesSuggestions.length === 0" class="no-places-found-box">
+          <span>No places found for "{{ searchQuery }}". Click Use Current Location or adjust on map.</span>
+        </div>
+      </div>
+
+      <!-- RECENT SEARCHES (Shown when search query is empty) -->
+      <div class="recent-searches-block" *ngIf="!searchQuery || searchQuery.trim().length === 0">
+        <div class="recent-header-row" *ngIf="recentLocations.length > 0">
+          <span class="recent-label">RECENT SEARCHES</span>
+        </div>
+
+        <div class="suggestions-list" *ngIf="filteredSuggestions.length > 0">
+          @for (item of filteredSuggestions; track item.name; let i = $index) {
           <div class="suggestion-item" (click)="selectLocationSuggestion(item)">
             <div class="sugg-left">
               <span class="history-clock-icon">🕒</span>
@@ -125,33 +152,31 @@
             </div>
             <div class="sugg-actions">
               <button class="map-link-btn" (click)="$event.stopPropagation(); selectLocationSuggestion(item)">MAP</button>
-              <button class="delete-recent-btn" (click)="removeRecentLocation(i, $event)" title="Remove from recent searches">⊗</button>
+              <button class="delete-recent-btn" (click)="removeRecentLocation(i, $event)"
+                title="Remove from recent searches">⊗</button>
             </div>
           </div>
-        }
-      </div>
+          }
+        </div>
 
-      <!-- Empty State when no recent search history exists -->
-      <div class="no-recent-box" *ngIf="filteredSuggestions.length === 0">
-        <span class="empty-icon">📍</span>
-        <p>No recent search history yet.</p>
-        <span class="empty-sub">Search an address or choose Current Location to set your work site.</span>
+        <div class="no-recent-box" *ngIf="filteredSuggestions.length === 0">
+          <span class="empty-icon">📍</span>
+          <p>No recent search history yet.</p>
+          <span class="empty-sub">Type an address above or choose Current Location to set your work site.</span>
+        </div>
       </div>
     </div>
 
     <!-- STEP 2: Interactive Leaflet Map View & Change Location Sheet -->
-    <div *ngIf="locationStep === 'adjust_map' || locationStep === 'confirm_details'" class="map-sheet-container animate-fade-in">
+    <div *ngIf="locationStep === 'adjust_map' || locationStep === 'confirm_details'"
+      class="map-sheet-container animate-fade-in">
       <button class="close-sheet-btn" (click)="showLocationModal = false">✕</button>
 
       <!-- Real Interactive Leaflet Map Container -->
       <div class="map-view-wrapper">
-        <div id="homeMapContainer" class="home-leaflet-map"></div>
+        <div id="homeMapContainer" class="home-map-canvas"></div>
 
-        <!-- Center Pin Pointer (Stays centered while map moves) -->
-        <div class="center-pin-container">
-          <div class="pin-marker">📍</div>
-          <div class="pin-shadow"></div>
-        </div>
+        
 
         <!-- Recenter GPS Button -->
         <button class="recenter-gps-btn" (click)="recenterMap()" title="Recenter Map">🎯</button>
@@ -166,8 +191,12 @@
           <div class="sheet-search-bar">
             <span class="search-icon">🔍</span>
             <div class="location-text-box">
-              <strong class="loc-title">{{ workSiteDetails.address }}</strong>
-              <p class="loc-sub">{{ searchQuery || 'Drag map to change location pointer' }}</p>
+              <strong class="loc-title" [title]="workSiteDetails.completeAddress || workSiteDetails.address">
+                {{ workSiteDetails.completeAddress || workSiteDetails.address }}
+              </strong>
+              <p class="loc-sub" *ngIf="workSiteDetails.landmark && workSiteDetails.landmark !== (workSiteDetails.completeAddress || workSiteDetails.address)">
+                📍 Landmark / Area: {{ workSiteDetails.landmark }}
+              </p>
             </div>
             <button class="change-location-btn" (click)="locationStep = 'search'">Change</button>
           </div>
@@ -179,7 +208,7 @@
 
         <div *ngIf="locationStep === 'confirm_details'" class="confirm-details-form">
           <h3>Confirm Work Site Details</h3>
-          
+
           <div class="form-group">
             <label>Work Location</label>
             <input type="text" [(ngModel)]="workSiteDetails.address" class="form-input" />
@@ -187,12 +216,14 @@
 
           <div class="form-group">
             <label>Complete Address / Building / Premises *</label>
-            <input type="text" [(ngModel)]="workSiteDetails.completeAddress" placeholder="Plot 42, Phase 2 Industrial Park" class="form-input" />
+            <input type="text" [(ngModel)]="workSiteDetails.completeAddress"
+              placeholder="Plot 42, Phase 2 Industrial Park" class="form-input" />
           </div>
 
           <div class="form-group">
             <label>Nearby Landmark *</label>
-            <input type="text" [(ngModel)]="workSiteDetails.landmark" placeholder="Opposite Metro Pillar 184" class="form-input" />
+            <input type="text" [(ngModel)]="workSiteDetails.landmark" placeholder="Opposite Metro Pillar 184"
+              class="form-input" />
           </div>
 
           <div class="form-group">
@@ -203,9 +234,12 @@
           <div class="form-group">
             <label>Save Address As</label>
             <div class="address-tags">
-              <span class="tag-pill" [class.selected]="workSiteDetails.tag === 'Home'" (click)="workSiteDetails.tag = 'Home'">🏠 Home</span>
-              <span class="tag-pill" [class.selected]="workSiteDetails.tag === 'Office'" (click)="workSiteDetails.tag = 'Office'">🏢 Office</span>
-              <span class="tag-pill" [class.selected]="workSiteDetails.tag === 'Site'" (click)="workSiteDetails.tag = 'Site'">🏗️ Site</span>
+              <span class="tag-pill" [class.selected]="workSiteDetails.tag === 'Home'"
+                (click)="workSiteDetails.tag = 'Home'">🏠 Home</span>
+              <span class="tag-pill" [class.selected]="workSiteDetails.tag === 'Office'"
+                (click)="workSiteDetails.tag = 'Office'">🏢 Office</span>
+              <span class="tag-pill" [class.selected]="workSiteDetails.tag === 'Site'"
+                (click)="workSiteDetails.tag = 'Site'">🏗️ Site</span>
             </div>
           </div>
 

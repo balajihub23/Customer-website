@@ -1,4 +1,4 @@
-<div class="bookings-viewport">
+<div class="bookings-viewport" [class.dark-mode]="themeService.isDarkMode()">
 
   <!-- ========================================== -->
   <!-- TOP HEADER & TABS -->
@@ -6,7 +6,12 @@
   <header class="bookings-header">
     <div class="header-top-row">
       <h1 class="page-title">My Bookings</h1>
-      <button class="refresh-btn" (click)="fetchBookings()" title="Refresh Bookings">↻</button>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <button class="theme-toggle-btn" (click)="themeService.toggleTheme()" [title]="'Switch to ' + (themeService.isDarkMode() ? 'Light' : 'Dark') + ' Mode'">
+          {{ themeService.isDarkMode() ? '☀️' : '🌙' }}
+        </button>
+        <button class="refresh-btn" (click)="fetchBookings()" title="Refresh Bookings">↻</button>
+      </div>
     </div>
 
     <!-- 3 Dynamic Category Tabs (Ongoing | Completed | Cancelled) -->

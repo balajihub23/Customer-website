@@ -60,10 +60,17 @@ export class ThemeService {
     this.activeTheme.set(theme);
     if (isPlatformBrowser(this.platformId)) {
       const root = document.documentElement;
-      if (theme === 'DARK') {
+      const isDark = theme === 'DARK';
+      if (isDark) {
         root.setAttribute('data-theme', 'dark');
+        document.body.setAttribute('data-theme', 'dark');
+        root.classList.add('dark-mode');
+        document.body.classList.add('dark-mode');
       } else {
         root.setAttribute('data-theme', 'light');
+        document.body.setAttribute('data-theme', 'light');
+        root.classList.remove('dark-mode');
+        document.body.classList.remove('dark-mode');
       }
     }
   }

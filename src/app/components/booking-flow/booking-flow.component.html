@@ -1,753 +1,955 @@
-<div class="booking-flow-viewport">
-
-  <!-- ========================================== -->
-  <!-- TOP APP BAR & PICKUP LOCATION BANNER -->
-  <!-- ========================================== -->
-  <header class="top-nav-bar">
-    <div class="status-bar-row">
-      <span class="time-text">07:02</span>
-      <div class="status-icons">
-        <span>📶</span>
-        <span>🔋</span>
-      </div>
-    </div>
-
-    <div class="nav-title-row">
-      <button class="nav-back-btn" (click)="goHome()">←</button>
-      <h1 class="page-title">{{ activeCategory === 'RENTALS' ? 'Rentals' : (activeCategory === 'OUTSTATION' ? 'Outstation Ride' : (activeCategory === 'EQUIPMENT' ? 'Heavy Equipment' : 'Select Ride Type')) }}</h1>
-      <span class="title-spacer"></span>
-    </div>
-
-    <!-- Pickup Location Pill Banner -->
-    <div class="pickup-pill-banner">
-      <span class="route-dot green-dot"></span>
-      <div class="pickup-address-text" title="{{ pickupLocation }}">
-        {{ pickupLocation }}
-      </div>
-      <button class="favorite-heart-btn" title="Save Favorite">♡</button>
-    </div>
-  </header>
-
-  <!-- Error Banner if API error -->
-  <div *ngIf="errorMessage" class="error-banner animate-fade-in">
-    <span>⚠️ {{ errorMessage }}</span>
-    <button (click)="errorMessage = ''">✕</button>
-  </div>
-
-  <!-- ========================================== -->
-  <!-- CATEGORY SWITCHER TABS (Daily Rides | Rentals | Outstation | Heavy Equipment) -->
-  <!-- ========================================== -->
-  <div class="category-tabs-container">
-    <div 
-      class="cat-tab-card" 
-      [class.active]="activeCategory === 'DAILY_RIDES'" 
-      (click)="setCategory('DAILY_RIDES')">
-      <span class="cat-icon">🚖</span>
-      <span class="cat-name">Daily Rides</span>
-    </div>
-
-    <div 
-      class="cat-tab-card" 
-      [class.active]="activeCategory === 'RENTALS'" 
-      (click)="setCategory('RENTALS')">
-      <span class="cat-icon">⏳</span>
-      <span class="cat-name">Rentals</span>
-    </div>
-
-    <div 
-      class="cat-tab-card" 
-      [class.active]="activeCategory === 'OUTSTATION'" 
-      (click)="setCategory('OUTSTATION')">
-      <span class="cat-icon">🏔️</span>
-      <span class="cat-name">Outstation</span>
-    </div>
-
-    <div 
-      class="cat-tab-card" 
-      [class.active]="activeCategory === 'EQUIPMENT'" 
-      (click)="setCategory('EQUIPMENT')">
-      <span class="cat-icon">🚜</span>
-      <span class="cat-name">Equipment</span>
-    </div>
-  </div>
-
-  <!-- ========================================== -->
-  <!-- 1. OUTSTATION FLOW -->
-  <!-- ========================================== -->
-  <section *ngIf="activeCategory === 'OUTSTATION'" class="outstation-flow-section animate-fade-in">
-    <!-- Destination Search Box -->
-    <div class="destination-search-box" (click)="openDestinationPicker()">
-      <span class="search-glass-icon">🔍</span>
-      <span class="destination-input-text">{{ destinationLocation || 'Where are you going?' }}</span>
-    </div>
-
-    <!-- Popular Destination Chips -->
-    <div class="popular-chips-row">
-      @for (dest of popularDestinations; track dest.name) {
-        <button 
-          class="dest-chip-btn" 
-          [class.selected]="destinationLocation.includes(dest.name)" 
-          (click)="selectDestination(dest)">
-          📍 {{ dest.name }}
+<div class="booking-flow-viewport" [class.dark-mode]="themeService.isDarkMode()">
+  
+  <!-- ======================================================== -->
+  <!-- SCREEN 1: SEARCH DESTINATION / RIDE HOME (Figma Screen 1) -->
+  <!-- ======================================================== -->
+  <ng-container *ngIf="activeCategory !== 'DAILY_RIDES' || currentStep === 'SEARCH_DESTINATION'">
+    <!-- Top Nav Bar -->
+    <header class="top-nav-bar">
+      <div class="nav-title-row">
+        <button class="nav-back-btn" (click)="goHome()" title="Back">←</button>
+        <h1 class="page-title">
+          {{ activeCategory === 'RENTALS' ? 'Rentals' : (activeCategory === 'OUTSTATION' ? 'Outstation Ride' : 'Ride') }}
+        </h1>
+        <button class="theme-toggle-btn" (click)="toggleThemeMode()" [title]="'Switch to ' + (themeService.isDarkMode() ? 'Light' : 'Dark') + ' Mode'">
+          {{ themeService.isDarkMode() ? '☀️' : '🌙' }}
         </button>
-      }
+      </div>
+
+      <!-- Pickup Location Pill Banner matching Figma -->
+      <div class="pickup-pill-banner" (click)="openPickupPicker()">
+        <span class="route-dot green-dot"></span>
+        <div class="pickup-address-text" [title]="pickupLocation">
+          {{ pickupLocation }}
+        </div>
+        <button class="favorite-heart-btn" title="Save Favorite" (click)="$event.stopPropagation()">♡</button>
+      </div>
+    </header>
+
+    <!-- Error Banner if API error -->
+    <div *ngIf="errorMessage" class="error-banner animate-fade-in">
+      <span>⚠️ {{ errorMessage }}</span>
+      <button (click)="errorMessage = ''">✕</button>
     </div>
 
-    <!-- Trip Mode Toggle: One-way vs Round-trip -->
-    <div class="trip-mode-toggle-row">
-      <div 
-        class="mode-card" 
-        [class.selected]="outstationMode === 'ONE_WAY'" 
-        (click)="setOutstationMode('ONE_WAY')">
-        <div class="mode-header">
-          <span class="radio-indicator"></span>
-          <strong>One-way</strong>
+    <!-- Interactive Map Canvas -->
+    <div class="map-view-section">
+      <div id="bookingFlowMap" class="booking-flow-map"></div>
+      <button class="recenter-map-btn" (click)="recenterMap()" title="Recenter on Pickup">📍</button>
+      <div class="nearby-cabs-badge" *ngIf="activeCategory !== 'EQUIPMENT'">
+        <span>{{ selectedVehicle?.icon || '🚖' }} {{ selectedVehicle?.name || 'Ride' }}: {{ selectedVehicle?.nearbyDriversCount || 18 }} nearby ({{ selectedVehicle?.eta || '2-3 min away' }})</span>
+      </div>
+    </div>
+
+    <!-- Category Tabs Container (Daily Rides | Rentals | Outstation | Equipment) -->
+    <div class="category-tabs-container">
+      <div class="cat-tab-card" [class.active]="activeCategory === 'DAILY_RIDES'" (click)="setCategory('DAILY_RIDES')">
+        <span class="cat-icon">🚖</span>
+        <div class="cat-text-col">
+          <span class="cat-name">Daily Rides</span>
+          <span class="cat-sub">Best drivers</span>
+        </div>
+        <span *ngIf="activeCategory === 'DAILY_RIDES'" class="active-check-badge">✓</span>
+      </div>
+
+      <div class="cat-tab-card" [class.active]="activeCategory === 'RENTALS'" (click)="setCategory('RENTALS')">
+        <span class="cat-icon">⏳</span>
+        <div class="cat-text-col">
+          <span class="cat-name">Rentals</span>
+          <span class="cat-sub">Multiple stops</span>
         </div>
       </div>
 
-      <div 
-        class="mode-card" 
-        [class.selected]="outstationMode === 'ROUND_TRIP'" 
-        (click)="setOutstationMode('ROUND_TRIP')">
-        <div class="mode-header">
-          <span class="radio-indicator"></span>
-          <strong>Round trip</strong>
+      <div class="cat-tab-card" [class.active]="activeCategory === 'OUTSTATION'" (click)="setCategory('OUTSTATION')">
+        <span class="cat-icon">🏔️</span>
+        <div class="cat-text-col">
+          <span class="cat-name">Outstation</span>
+          <span class="cat-sub">Best drivers</span>
         </div>
-        <span class="mode-sub">Keep the car till return</span>
       </div>
     </div>
 
-    <!-- Date/Time Schedule Display Pill -->
-    <div class="schedule-pill-card" (click)="openScheduleModal()">
-      <div class="schedule-pill-content">
-        <span class="cal-symbol">📅</span>
-        <span class="schedule-text">
-          {{ outstationMode === 'ONE_WAY' ? ('Booking for ' + scheduleDisplayString) : ('Booking for ' + roundTripDisplayString) }}
-        </span>
+    <!-- DAILY RIDES: Where are you going Search Bar -->
+    <div *ngIf="activeCategory === 'DAILY_RIDES'" class="destination-search-section">
+      <div class="search-input-box" [class.focused]="isSelectingDestination">
+        <span class="search-glass-icon">🔍</span>
+        <input 
+          type="text" 
+          class="destination-input" 
+          placeholder="Where are you going?" 
+          [(ngModel)]="destinationSearchQuery"
+          (focus)="isSelectingDestination = true"
+          (input)="onDestinationSearchChange()" />
+        <button *ngIf="destinationSearchQuery" class="clear-search-btn" (click)="clearDestination()">✕</button>
       </div>
-      <button class="pill-edit-arrow">➔</button>
-    </div>
 
-    <!-- Vehicles List -->
-    <div class="vehicles-selection-list">
-      @for (v of vehiclesList; track v.id) {
+      <!-- Suggestions matching Figma Screenshot 1 & vendorstore -->
+      <div *ngIf="destinationSearchQuery && destinationSearchQuery.trim().length > 0" class="suggestions-list-card animate-slide-up">
+        <div *ngIf="isSearchingPlaces" class="places-loading-row">
+          <span>Searching Google Places...</span>
+        </div>
+
         <div 
-          class="vehicle-option-card" 
-          [class.selected]="selectedVehicle?.id === v.id" 
-          (click)="selectVehicle(v)">
-          <div class="card-left-section">
-            <div class="vehicle-emoji-box">{{ v.icon }}</div>
-            <div class="vehicle-title-box">
-              <div class="name-info-row">
-                <h3>{{ v.name }}</h3>
-                <button class="info-circle-btn" (click)="openVehicleInfo(v, $event)" title="View Details">ⓘ</button>
-              </div>
-              <p class="tag-line">{{ v.tag }}</p>
-              <p *ngIf="selectedVehicle?.id === v.id" class="eta-pill">{{ v.eta }}</p>
-            </div>
-          </div>
-          <div class="card-right-section">
-            <span class="fare-display">₹{{ v.fare }}</span>
+          *ngFor="let item of googlePlacesSuggestions" 
+          class="suggestion-row" 
+          (click)="selectGooglePlace(item)">
+          <div class="sugg-icon-box">📍</div>
+          <div class="sugg-text-box">
+            <strong class="sugg-name">{{ item.title }}</strong>
+            <span class="sugg-details">{{ item.address }}</span>
           </div>
         </div>
-      }
-    </div>
 
-    <!-- Payment Mode Bar -->
-    <div class="payment-mode-selector-bar" (click)="openPaymentModeModal()">
-      <div class="pay-left">
-        <span class="pay-mode-label">Payment Mode</span>
+        <div *ngIf="!isSearchingPlaces && googlePlacesSuggestions.length === 0" class="places-empty-row">
+          <span>No matching places found for "{{ destinationSearchQuery }}"</span>
+        </div>
+
+        <div class="suggestion-row current-location-row" (click)="selectCurrentLocationAsDestination()">
+          <div class="sugg-icon-box">↗️</div>
+          <div class="sugg-text-box">
+            <strong class="sugg-name">Use my current location</strong>
+          </div>
+        </div>
       </div>
-      <div class="pay-right">
-        <span class="selected-pay-name">{{ paymentMode }}</span>
-        <span class="dropdown-chevron">▾</span>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- RENTALS FLOW (Figma Screenshot 1: RENTAL - only for cars)-->
+    <!-- ======================================================== -->
+    <div *ngIf="activeCategory === 'RENTALS' && currentRentalStep === 'SELECT_PACKAGE_AND_CAR'" class="rentals-package-view animate-fade-in">
+      <!-- Selected Package Banner with View Details link (Screen 2) -->
+      <div *ngIf="selectedRentalPackage" class="rental-package-banner-card">
+        <div class="pkg-banner-left">
+          <span class="pkg-clock-icon">🕒</span>
+          <div class="pkg-banner-text">
+            <strong>{{ selectedRentalPackage.name }} package</strong>
+            <small>Extra charges on exceeding package</small>
+          </div>
+        </div>
+        <button class="view-details-link-btn" (click)="openRentalRulesModal()">View details</button>
       </div>
-    </div>
 
-    <!-- Sticky Bottom CTA -->
-    <div class="sticky-bottom-action-bar">
-      <button class="primary-yellow-cta-btn" (click)="openReviewBooking()">
-        Review Booking • ₹{{ selectedVehicle?.fare }}
-      </button>
-    </div>
-  </section>
-
-  <!-- ========================================== -->
-  <!-- 2. RENTALS FLOW -->
-  <!-- ========================================== -->
-  <section *ngIf="activeCategory === 'RENTALS'" class="rentals-flow-section animate-fade-in">
-    <!-- Package Selector Header & Horizontally Scrollable Pills -->
-    <div class="package-header-block">
-      <h2 class="sub-section-title">Select a package</h2>
-      <p class="package-description-sub">Multiple stops, car stays with you for entire duration</p>
-
-      <div class="packages-scroll-strip">
-        @for (pkg of rentalPackages; track pkg.id) {
+      <!-- Package Selection Horizontal Scroll Strip (Screen 1 & 2) -->
+      <div class="package-selection-strip-container">
+        <div class="section-micro-label" *ngIf="!selectedRentalPackage">Select a package</div>
+        <div class="packages-scroll-strip">
           <button 
+            *ngFor="let pkg of rentalPackages" 
             class="package-pill-btn" 
             [class.active]="selectedRentalPackage?.id === pkg.id" 
             (click)="selectRentalPackage(pkg)">
             {{ pkg.name }}
           </button>
+        </div>
+      </div>
+
+      <div class="category-section-title-row">
+        <h3>Comfy, economical cars</h3>
+      </div>
+
+      <!-- Vehicle Cards List (Cars Only: Mini, Prime Sedan, Prime SUV) -->
+      <div class="rentals-cars-list">
+        <div 
+          *ngFor="let v of displayedVehiclesList" 
+          class="rental-car-card" 
+          [class.selected]="selectedVehicle?.id === v.id"
+          (click)="selectVehicle(v)">
+          <div class="car-card-icon-col">
+            <span class="car-emoji">{{ v.icon }}</span>
+          </div>
+          <div class="car-card-info-col">
+            <div class="car-title-row">
+              <h4>{{ v.name }}</h4>
+              <span class="seats-badge">👥 {{ v.seats }}</span>
+            </div>
+            <p class="car-tagline">{{ v.tag }}</p>
+          </div>
+          <div class="car-card-price-col">
+            <span class="car-fare-amount">₹{{ v.fare }}</span>
+            <button class="info-circle-btn" (click)="openVehicleInfoModal(v, $event)" title="View Rate Card">ⓘ</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment Mode Bar -->
+      <div class="payment-mode-bar-row" (click)="openPaymentModeModal()">
+        <span class="pm-label">Payment Mode</span>
+        <button class="pm-value-btn">
+          <span class="pm-dot">●</span> {{ paymentMode }} ▾
+        </button>
+      </div>
+
+      <!-- Sticky Bottom Action Button -->
+      <div class="sticky-bottom-action-bar">
+        <button class="primary-yellow-cta-btn" (click)="proceedToRentalConfirmPickup()">
+          Book {{ selectedVehicle?.name || 'Car' }} • ₹{{ selectedVehicle?.fare || 1243 }}
+        </button>
+      </div>
+    </div>
+
+    <!-- RENTALS CONFIRM PICKUP MAP SCREEN (Screen 3) -->
+    <div *ngIf="activeCategory === 'RENTALS' && currentRentalStep === 'CONFIRM_PICKUP'" class="rentals-confirm-pickup-screen animate-fade-in">
+      <div class="confirm-pickup-map-container">
+        <div class="center-pin-overlay">
+          <div class="pin-marker">📍</div>
+          <div class="pin-shadow"></div>
+        </div>
+        <button class="map-target-recenter-btn" (click)="recenterMap()" title="Target Current Location">🎯</button>
+      </div>
+
+      <div class="confirm-pickup-bottom-card">
+        <h3 class="sheet-title">Confirm your pickup</h3>
+        <div class="pickup-address-pill">
+          <span class="route-dot green-dot"></span>
+          <span class="address-text">{{ pickupLocation }}</span>
+        </div>
+        <div class="action-buttons-row">
+          <button class="secondary-back-btn" (click)="backToRentalPackageSelect()">Back</button>
+          <button class="primary-yellow-cta-btn" (click)="confirmRentalPickup()">
+            Confirm Pickup
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- OUTSTATION FLOW (Figma Screenshot 2: Outstation for cars)-->
+    <!-- ======================================================== -->
+    <div *ngIf="activeCategory === 'OUTSTATION'" class="outstation-container animate-fade-in">
+      <!-- Destination Search section with Popular Chips (Screen 1) -->
+      <div *ngIf="!hasConfirmedDestination" class="outstation-search-section">
+        <div class="search-input-box">
+          <span class="search-glass-icon">🔍</span>
+          <input 
+            type="text" 
+            class="destination-input" 
+            placeholder="Where are you going?" 
+            [(ngModel)]="destinationSearchQuery"
+            (input)="onDestinationSearchChange()" />
+        </div>
+
+        <!-- Popular Destination Chips matching Figma Screenshot 2 -->
+        <div class="popular-chips-container">
+          <div class="chips-title">Popular Destinations</div>
+          <div class="chips-list">
+            <button 
+              *ngFor="let dest of popularOutstationDestinations" 
+              class="dest-chip-btn" 
+              (click)="selectOutstationCity(dest)">
+              <span class="chip-pin">📍</span>
+              <span class="chip-name">{{ dest.name }}</span>
+              <span class="chip-state">{{ dest.state }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Outstation Vehicle Selection & Schedule View (Screen 2 & 4) -->
+      <div *ngIf="hasConfirmedDestination" class="outstation-selected-dest-view animate-fade-in">
+        <!-- Destination Banner -->
+        <div class="dest-summary-pill">
+          <span class="route-dot red-dot"></span>
+          <span class="dest-name">{{ destinationLocation }}</span>
+          <button class="change-dest-btn" (click)="hasConfirmedDestination = false">Change</button>
+        </div>
+
+        <!-- Mode Toggle: One-Way vs Round Trip -->
+        <div class="outstation-mode-toggle-card">
+          <button 
+            class="mode-toggle-tab" 
+            [class.active]="outstationMode === 'ONE_WAY'" 
+            (click)="setOutstationMode('ONE_WAY')">
+            <strong>One-way</strong>
+            <small>Get dropped off</small>
+          </button>
+          <button 
+            class="mode-toggle-tab" 
+            [class.active]="outstationMode === 'ROUND_TRIP'" 
+            (click)="setOutstationMode('ROUND_TRIP')">
+            <strong>Round trip</strong>
+            <small>Keep the car till return</small>
+          </button>
+        </div>
+
+        <!-- Schedule Bar matching Figma Screenshot 2 -->
+        <div class="schedule-booking-bar" (click)="openOutstationScheduleModal()">
+          <span class="sched-icon">📅</span>
+          <div class="sched-text">
+            <strong>Booking for {{ outstationMode === 'ROUND_TRIP' ? (roundTripDisplayString || scheduleDisplayString + ' — SELECT') : scheduleDisplayString }}</strong>
+          </div>
+          <span class="chevron">›</span>
+        </div>
+
+        <!-- Vehicle Cards (Strictly Cars: Mini, Prime Sedan, Prime SUV) -->
+        <div class="outstation-cars-list">
+          <div 
+            *ngFor="let v of displayedVehiclesList" 
+            class="rental-car-card" 
+            [class.selected]="selectedVehicle?.id === v.id"
+            (click)="selectVehicle(v)">
+            <div class="car-card-icon-col">
+              <span class="car-emoji">{{ v.icon }}</span>
+            </div>
+            <div class="car-card-info-col">
+              <div class="car-title-row">
+                <h4>{{ v.name }}</h4>
+                <span class="seats-badge">👥 {{ v.seats }}</span>
+              </div>
+              <p class="car-tagline">{{ v.tag }}</p>
+            </div>
+            <div class="car-card-price-col">
+              <span class="car-fare-amount">₹{{ v.fare }}</span>
+              <button class="info-circle-btn" (click)="openVehicleInfoModal(v, $event)">ⓘ</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Mode Bar -->
+        <div class="payment-mode-bar-row" (click)="openPaymentModeModal()">
+          <span class="pm-label">Payment Mode</span>
+          <button class="pm-value-btn">
+            <span class="pm-dot">●</span> {{ paymentMode }} ▾
+          </button>
+        </div>
+
+        <!-- Sticky Bottom Review Booking CTA Button -->
+        <div class="sticky-bottom-action-bar">
+          <button class="primary-yellow-cta-btn" (click)="openReviewBookingSheet()">
+            Review Booking
+          </button>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ======================================================== -->
+  <!-- SCREEN 2: PICK-UP LOCATION MAP (Figma Screen 2)          -->
+  <!-- ======================================================== -->
+  <section *ngIf="activeCategory === 'DAILY_RIDES' && currentStep === 'CONFIRM_LOCATION_MAP'" class="screen-confirm-location animate-fade-in">
+    <!-- Top Nav Bar -->
+    <header class="top-nav-bar">
+      <div class="nav-title-row">
+        <button class="nav-back-btn" (click)="goBackToSearch()" title="Back">←</button>
+        <h1 class="page-title">Enter destination</h1>
+        <div class="recipient-dropdown-pill" (click)="showContactPickerModal = true">
+          <span class="pill-user-icon">👤</span>
+          <span class="pill-name">{{ rideRecipient === 'MYSELF' ? 'Myself' : (recipientContactName || 'Other') }}</span>
+          <span class="pill-chevron">▾</span>
+        </div>
+      </div>
+
+      <!-- Destination Search Pill matching Figma Screen 2 -->
+      <div class="dest-address-pill-card">
+        <span class="red-arrow-icon">🔴 ▸</span>
+        <div class="dest-text" [title]="destinationLocation">
+          {{ destinationLocation }}
+        </div>
+        <button class="clear-dest-btn" (click)="goBackToSearch()" title="Change Destination">✕</button>
+      </div>
+    </header>
+
+    <!-- Fullscreen Google Map for Confirmation -->
+    <div class="map-view-section fullscreen-map">
+      <div id="bookingFlowMap" class="booking-flow-map"></div>
+      <button class="recenter-map-btn gps-yellow-btn" (click)="recenterMap()" title="Recenter Location">⌖</button>
+    </div>
+
+    <!-- Fixed Bottom Confirm Location Button matching Figma Screen 2 -->
+    <div class="confirm-location-bottom-bar">
+      <button class="confirm-location-btn" (click)="confirmLocation()">
+        Confirm Location
+      </button>
+    </div>
+  </section>
+
+  <!-- ======================================================== -->
+  <!-- SCREEN 3: SELECT RIDE TYPE LIST (Figma Screen 3)         -->
+  <!-- ======================================================== -->
+  <section *ngIf="activeCategory === 'DAILY_RIDES' && currentStep === 'SELECT_VEHICLE'" class="screen-select-vehicle animate-fade-in">
+    <!-- Top Nav Bar -->
+    <header class="top-nav-bar compact-header">
+      <div class="nav-title-row">
+        <button class="nav-back-btn" (click)="goBackToLocationMap()" title="Back">←</button>
+        <span class="step-title">Select a Ride</span>
+        <div class="spacer-flex"></div>
+        <div class="recipient-dropdown-pill" (click)="showContactPickerModal = true">
+          <span class="pill-user-icon">👤</span>
+          <span class="pill-name">{{ rideRecipient === 'MYSELF' ? 'Myself' : (recipientContactName || 'Other') }}</span>
+          <span class="pill-chevron">▾</span>
+        </div>
+      </div>
+
+      <!-- 2-Stop Route Card matching Figma Screen 3 -->
+      <div class="route-summary-card">
+        <div class="route-col">
+          <div class="route-row">
+            <span class="route-indicator-dot green-dot"></span>
+            <span class="route-address-text truncate-text" [title]="pickupLocation || 'Current Location'">{{ pickupLocation || 'Current Location' }}</span>
+          </div>
+          <div class="route-divider-line"></div>
+          
+          <!-- Intermediate Stop (Figma multi-stop flow) -->
+          <div *ngIf="hasStop" class="route-row stop-row animate-fade-in">
+            <span class="route-indicator-dot orange-dot"></span>
+            <span class="route-address-text truncate-text stop-text" [title]="stopAddress">Stop: {{ stopAddress }}</span>
+            <button class="remove-stop-inline-btn" (click)="removeStop($event)" title="Remove Stop">✕</button>
+          </div>
+          <div *ngIf="hasStop" class="route-divider-line"></div>
+
+          <div class="route-row">
+            <span class="route-indicator-dot red-dot"></span>
+            <span class="route-address-text truncate-text" [title]="destinationLocation || 'Enter destination'">{{ destinationLocation || 'Enter destination' }}</span>
+          </div>
+        </div>
+        <button class="add-stop-plus-btn" (click)="openEditStopModal()" [title]="hasStop ? 'Edit Stop' : 'Add Stop'">
+          {{ hasStop ? '✎' : '+' }}
+        </button>
+      </div>
+    </header>
+
+    <!-- Upper Half Map View -->
+    <div class="map-view-section upper-map">
+      <div id="bookingFlowMap" class="booking-flow-map"></div>
+      <button class="recenter-map-btn" (click)="recenterMap()" title="Recenter">📍</button>
+      <div class="nearby-cabs-badge">
+        <span>{{ selectedVehicle?.icon || '🚖' }} {{ selectedVehicle?.name || 'Ride' }}: {{ selectedVehicle?.nearbyDriversCount || 18 }} nearby</span>
+      </div>
+    </div>
+
+    <!-- Bottom Vehicle Selection Drawer matching Figma Screen 3 -->
+    <div class="vehicles-bottom-drawer">
+      <div class="drawer-handle-bar"></div>
+
+      <!-- Vehicle Options List (Auto ₹143, Bike ₹98, Scooter ₹100, Mini ₹243, Prime Sedan ₹165, Prime SUV ₹225) -->
+      <div class="vehicles-selection-list">
+        @for (v of displayedVehiclesList; track v.id) {
+        <div 
+          class="vehicle-option-card" 
+          [class.selected]="selectedVehicle?.id === v.id" 
+          (click)="selectVehicle(v)">
+          
+          <!-- Yellow Nearby Badge for SUV matching Figma -->
+          <div *ngIf="selectedVehicle?.id === v.id" class="drivers-nearby-yellow-badge">
+            <span class="yellow-dot">●</span> {{ v.nearbyDriversCount !== undefined ? v.nearbyDriversCount : 0 }} drivers nearby
+          </div>
+
+          <div class="card-content-row">
+            <div class="vehicle-emoji-box">{{ v.icon }}</div>
+            <div class="vehicle-title-box">
+              <div class="name-info-row">
+                <h3>{{ v.name }} <span *ngIf="v.seats" class="seat-badge">👥 {{ v.seats }}</span></h3>
+              </div>
+              <p class="eta-line">{{ v.eta }}</p>
+              <p *ngIf="v.code === 'PROD_SUV'" class="suv-subtext">Spacious SUVs</p>
+            </div>
+            <div class="card-right-section">
+              <span class="fare-display">
+                <button *ngIf="v.code === 'PROD_SUV'" class="info-circle-btn" (click)="openVehicleInfo(v, $event)">ⓘ</button>
+                ₹{{ v.fare }}
+              </span>
+            </div>
+          </div>
+        </div>
+        }
+      </div>
+
+      <!-- Payment Mode Bar matching Figma Screen 3 -->
+      <div class="payment-mode-selector-bar" (click)="openPaymentModeModal()">
+        <span class="pay-mode-label">Payment Mode</span>
+        <div class="pay-right">
+          <span class="cash-dot">●</span>
+          <span class="selected-pay-name">{{ paymentMode }}</span>
+          <span class="dropdown-chevron">▼</span>
+        </div>
+      </div>
+
+      <!-- Bottom Action Row: [ Now (clock) ] + [ Book Prime SUV • ₹225 ] -->
+      <div class="bottom-action-buttons-row">
+        <button class="now-clock-btn" [class.is-scheduled]="scheduledPickupIso" (click)="openScheduleModal()" title="Schedule Trip">
+          <ng-container *ngIf="!scheduledPickupIso">
+            <span class="clock-icon">🕒</span>
+            <span class="clock-label">Now</span>
+          </ng-container>
+          <ng-container *ngIf="scheduledPickupIso">
+            <span class="sched-pill-text">📅 {{ scheduleDisplayString }}</span>
+          </ng-container>
+        </button>
+        <button 
+          class="primary-yellow-cta-btn" 
+          [disabled]="isBookingSubmitting"
+          (click)="confirmAndDispatchBooking()">
+          {{ isBookingSubmitting ? 'Creating Booking...' : ('Book ' + (selectedVehicle?.name || 'Ride') + ' • ₹' + (selectedVehicle?.fare || '225')) }}
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================== -->
+  <!-- RENTALS / OUTSTATION / EQUIPMENT EXTRA FLOWS             -->
+  <!-- ======================================================== -->
+  <section *ngIf="activeCategory === 'RENTALS' && hasConfirmedDestination" class="rentals-flow-section animate-fade-in">
+    <div class="package-header-block">
+      <h2 class="sub-section-title">Select a package</h2>
+      <div class="packages-scroll-strip">
+        @for (pkg of rentalPackages; track pkg.id) {
+        <button class="package-pill-btn" [class.active]="selectedRentalPackage?.id === pkg.id" (click)="selectRentalPackage(pkg)">
+          {{ pkg.name }}
+        </button>
         }
       </div>
     </div>
 
-    <!-- Selected Package Summary Banner with "View details" link -->
-    <div class="package-summary-banner" *ngIf="selectedRentalPackage">
-      <span class="pkg-title">{{ selectedRentalPackage.name }} package</span>
-      <button class="view-details-blue-link" (click)="showRentalRulesModal = true">View details</button>
-    </div>
-
-    <!-- Rental Car Selection Cards -->
     <div class="vehicles-selection-list">
-      @for (v of vehiclesList; track v.id) {
-        <div 
-          class="vehicle-option-card" 
-          [class.selected]="selectedVehicle?.id === v.id" 
-          (click)="selectVehicle(v)">
-          <div class="card-left-section">
-            <div class="vehicle-emoji-box">{{ v.icon }}</div>
-            <div class="vehicle-title-box">
-              <div class="name-info-row">
-                <h3>{{ v.name }} <span class="seat-badge">👥 {{ v.seats }}</span></h3>
-                <button class="info-circle-btn" (click)="openVehicleInfo(v, $event)" title="Vehicle info">ⓘ</button>
-              </div>
-              <p class="tag-line">{{ v.tag }}</p>
-            </div>
+      @for (v of displayedVehiclesList; track v.id) {
+      <div class="vehicle-option-card" [class.selected]="selectedVehicle?.id === v.id" (click)="selectVehicle(v)">
+        <div class="card-content-row">
+          <div class="vehicle-emoji-box">{{ v.icon }}</div>
+          <div class="vehicle-title-box">
+            <h3>{{ v.name }}</h3>
+            <p class="tag-line">{{ v.tag }}</p>
           </div>
           <div class="card-right-section">
             <span class="fare-display">₹{{ v.fare }}</span>
           </div>
         </div>
+      </div>
       }
     </div>
 
-    <!-- Payment Mode Bar -->
-    <div class="payment-mode-selector-bar" (click)="openPaymentModeModal()">
-      <div class="pay-left">
-        <span class="pay-mode-label">Payment Mode</span>
-      </div>
-      <div class="pay-right">
-        <span class="selected-pay-name">{{ paymentMode }}</span>
-        <span class="dropdown-chevron">▾</span>
-      </div>
-    </div>
-
-    <!-- Sticky Bottom CTA -->
     <div class="sticky-bottom-action-bar">
-      <button class="primary-yellow-cta-btn" (click)="showConfirmPickupSheet = true">
+      <button class="primary-yellow-cta-btn" (click)="confirmAndDispatchBooking()">
         Book {{ selectedVehicle?.name }} • ₹{{ selectedVehicle?.fare }}
       </button>
     </div>
   </section>
 
-  <!-- ========================================== -->
-  <!-- 3. DAILY RIDES FLOW -->
-  <!-- ========================================== -->
-  <section *ngIf="activeCategory === 'DAILY_RIDES'" class="daily-rides-section animate-fade-in">
-    <!-- Schedule for Later Banner -->
-    <div class="schedule-banner-row" (click)="openScheduleModal()">
-      <div class="left-banner">
-        <span class="cal-icon">🕒</span>
-        <div>
-          <strong>Schedule for Later</strong>
-          <p>{{ scheduleDisplayString }}</p>
-        </div>
+  <section *ngIf="activeCategory === 'OUTSTATION' && hasConfirmedDestination" class="outstation-flow-section animate-fade-in">
+    <div class="trip-mode-toggle-row">
+      <div class="mode-card" [class.selected]="outstationMode === 'ONE_WAY'" (click)="setOutstationMode('ONE_WAY')">
+        <strong>One-way</strong>
       </div>
-      <span class="edit-text">Edit ➔</span>
+      <div class="mode-card" [class.selected]="outstationMode === 'ROUND_TRIP'" (click)="setOutstationMode('ROUND_TRIP')">
+        <strong>Round trip</strong>
+      </div>
     </div>
 
-    <!-- Vehicles List -->
     <div class="vehicles-selection-list">
-      @for (v of vehiclesList; track v.id) {
-        <div 
-          class="vehicle-option-card" 
-          [class.selected]="selectedVehicle?.id === v.id" 
-          (click)="selectVehicle(v)">
-          <div class="card-left-section">
-            <div class="vehicle-emoji-box">{{ v.icon }}</div>
-            <div class="vehicle-title-box">
-              <div class="name-info-row">
-                <h3>{{ v.name }}</h3>
-                <button class="info-circle-btn" (click)="openVehicleInfo(v, $event)">ⓘ</button>
-              </div>
-              <p class="tag-line">{{ v.tag }}</p>
-              <p *ngIf="selectedVehicle?.id === v.id" class="eta-pill">{{ v.eta }}</p>
-            </div>
+      @for (v of displayedVehiclesList; track v.id) {
+      <div class="vehicle-option-card" [class.selected]="selectedVehicle?.id === v.id" (click)="selectVehicle(v)">
+        <div class="card-content-row">
+          <div class="vehicle-emoji-box">{{ v.icon }}</div>
+          <div class="vehicle-title-box">
+            <h3>{{ v.name }}</h3>
+            <p class="tag-line">{{ v.tag }}</p>
           </div>
           <div class="card-right-section">
             <span class="fare-display">₹{{ v.fare }}</span>
           </div>
         </div>
+      </div>
       }
     </div>
 
-    <!-- Payment Mode Selector -->
-    <div class="payment-mode-selector-bar" (click)="openPaymentModeModal()">
-      <div class="pay-left">
-        <span class="pay-mode-label">Payment Mode</span>
-      </div>
-      <div class="pay-right">
-        <span class="selected-pay-name">{{ paymentMode }}</span>
-        <span class="dropdown-chevron">▾</span>
-      </div>
-    </div>
-
-    <!-- Sticky Bottom CTA -->
     <div class="sticky-bottom-action-bar">
-      <button class="primary-yellow-cta-btn" (click)="openReviewBooking()">
-        Book {{ selectedVehicle?.name }} • ₹{{ selectedVehicle?.fare }}
+      <button class="primary-yellow-cta-btn" (click)="confirmAndDispatchBooking()">
+        Review Booking • ₹{{ selectedVehicle?.fare }}
       </button>
     </div>
   </section>
 
-  <!-- ========================================== -->
-  <!-- 4. HEAVY EQUIPMENT FLOW -->
-  <!-- ========================================== -->
-  <section *ngIf="activeCategory === 'EQUIPMENT'" class="equipment-flow-section animate-fade-in">
-    <div class="machinery-params-card">
-      <div class="param-row">
-        <span>Operator Required</span>
-        <input type="checkbox" [(ngModel)]="operatorRequired" (change)="recalculateAuthoritativeQuote()" />
+  <!-- ======================================================== -->
+  <!-- MODALS (Schedule, Payment, Contact Picker, Edit Stop)    -->
+  <!-- ======================================================== -->
+  <!-- Contact Picker Modal (Myself vs Other) -->
+  <div *ngIf="showContactPickerModal" class="modal-backdrop-overlay animate-fade-in" (click)="showContactPickerModal = false">
+    <div class="bottom-sheet contact-picker-sheet animate-slide-up" (click)="$event.stopPropagation()">
+      <div class="sheet-handle"></div>
+      <h2 class="sheet-title">Someone else taking this ride?</h2>
+      <p class="sheet-sub">Choose a contact so they also receive driver and vehicle details via SMS.</p>
+
+      <div class="recipient-selection-cards">
+        <div class="recipient-card-option" [class.selected]="rideRecipient === 'MYSELF'" (click)="rideRecipient = 'MYSELF'">
+          <div class="card-radio-circle">
+            <div class="radio-inner" *ngIf="rideRecipient === 'MYSELF'"></div>
+          </div>
+          <span class="recipient-icon">👤</span>
+          <div class="recipient-info">
+            <strong>Myself</strong>
+            <span>You will receive ride updates directly</span>
+          </div>
+        </div>
+
+        <div class="recipient-card-option" [class.selected]="rideRecipient === 'OTHER'" (click)="rideRecipient = 'OTHER'">
+          <div class="card-radio-circle">
+            <div class="radio-inner" *ngIf="rideRecipient === 'OTHER'"></div>
+          </div>
+          <span class="recipient-icon">👥</span>
+          <div class="recipient-info">
+            <strong>Choose another contact</strong>
+            <span>Send booking updates to someone else</span>
+          </div>
+        </div>
       </div>
-      <div class="param-row">
-        <span>Duration (Hours)</span>
-        <select [(ngModel)]="machineryDurationHours" (change)="recalculateAuthoritativeQuote()">
-          <option [value]="4">4 Hours (Half Day)</option>
-          <option [value]="8">8 Hours (Full Shift)</option>
-          <option [value]="16">16 Hours (Double Shift)</option>
-          <option [value]="24">24 Hours (Full Day)</option>
+
+      <div *ngIf="rideRecipient === 'OTHER'" class="contact-inputs-group animate-slide-up">
+        <input type="text" class="input-field styled-input" placeholder="Contact Name" [(ngModel)]="recipientContactName" />
+        <input type="tel" class="input-field styled-input" placeholder="Contact Mobile (10 digits)" [(ngModel)]="recipientContactPhone" />
+      </div>
+
+      <div class="sheet-action-row">
+        <button class="skip-btn-secondary" (click)="skipRideRecipient()">Skip</button>
+        <button class="confirm-btn primary-yellow-cta-btn" (click)="confirmRideRecipient()">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Schedule Wheel Picker Modal -->
+  <div *ngIf="showScheduleModal" class="modal-backdrop animate-fade-in" (click)="closeScheduleModal()">
+    <div class="bottom-sheet schedule-picker-sheet animate-slide-up" (click)="$event.stopPropagation()">
+      <div class="sheet-handle"></div>
+      <h2 class="sheet-title">Schedule Ride</h2>
+
+      <div class="wheel-picker-columns">
+        <select [(ngModel)]="selectedLeaveDayIndex" class="wheel-select">
+          <option *ngFor="let d of wheelDays; let i = index" [value]="i">{{ d.label }}</option>
+        </select>
+        <select [(ngModel)]="selectedLeaveHour" class="wheel-select">
+          <option *ngFor="let h of wheelHours" [value]="h">{{ h }}</option>
+        </select>
+        <select [(ngModel)]="selectedLeaveMinute" class="wheel-select">
+          <option *ngFor="let m of wheelMinutes" [value]="m">{{ m }}</option>
+        </select>
+        <select [(ngModel)]="selectedLeavePeriod" class="wheel-select">
+          <option *ngFor="let p of wheelPeriods" [value]="p">{{ p }}</option>
         </select>
       </div>
-    </div>
 
-    <!-- Dynamic Equipment Products -->
-    <div class="vehicles-selection-list">
-      @for (v of vehiclesList; track v.id) {
-        <div 
-          class="vehicle-option-card" 
-          [class.selected]="selectedVehicle?.id === v.id" 
-          (click)="selectVehicle(v)">
-          <div class="card-left-section">
-            <div class="vehicle-emoji-box">🚜</div>
-            <div class="vehicle-title-box">
-              <div class="name-info-row">
-                <h3>{{ v.name }}</h3>
-                <button class="info-circle-btn" (click)="openVehicleInfo(v, $event)">ⓘ</button>
-              </div>
-              <p class="tag-line">{{ v.tag }}</p>
-            </div>
-          </div>
-          <div class="card-right-section">
-            <span class="fare-display">₹{{ v.fare }}</span>
-          </div>
-        </div>
-      }
-    </div>
-
-    <div class="payment-mode-selector-bar" (click)="openPaymentModeModal()">
-      <div class="pay-left">
-        <span class="pay-mode-label">Payment Mode</span>
-      </div>
-      <div class="pay-right">
-        <span class="selected-pay-name">{{ paymentMode }}</span>
-        <span class="dropdown-chevron">▾</span>
-      </div>
-    </div>
-
-    <div class="sticky-bottom-action-bar">
-      <button class="primary-yellow-cta-btn" (click)="openReviewBooking()">
-        Book {{ selectedVehicle?.name }} • ₹{{ selectedVehicle?.fare }}
-      </button>
-    </div>
-  </section>
-
-  <!-- Bottom Navigation -->
-  <app-bottom-nav activeTab="HOME"></app-bottom-nav>
-
-  <!-- ========================================== -->
-  <!-- MODAL 1: SCHEDULE ONE-WAY / ROUND TRIP WHEEL PICKER -->
-  <!-- ========================================== -->
-  <div *ngIf="showScheduleModal" class="modal-backdrop-overlay" (click)="closeScheduleModal()">
-    <div class="bottom-sheet-dialog animate-slide-up" (click)="$event.stopPropagation()">
-      
-      <!-- One-Way Modal Header -->
-      <div *ngIf="outstationMode === 'ONE_WAY'" class="sheet-header">
-        <h2>Schedule Ride</h2>
-        <p class="sheet-sub">Starting {{ scheduleDisplayString }}</p>
-      </div>
-
-      <!-- Round-Trip Modal Header with Leave on & Return by Tabs -->
-      <div *ngIf="outstationMode === 'ROUND_TRIP'" class="round-trip-sheet-header">
-        <h2>Schedule Round Trip</h2>
-        <div class="round-trip-tabs-row">
-          <button 
-            class="rt-tab-btn" 
-            [class.active]="scheduleRoundTripTab === 'LEAVE_ON'" 
-            (click)="scheduleRoundTripTab = 'LEAVE_ON'">
-            Leave on
-          </button>
-          <button 
-            class="rt-tab-btn" 
-            [class.active]="scheduleRoundTripTab === 'RETURN_BY'" 
-            (click)="scheduleRoundTripTab = 'RETURN_BY'">
-            Return by
-          </button>
-        </div>
-      </div>
-
-      <!-- Wheel Picker Columns -->
-      <div class="wheel-picker-columns">
-        <!-- Day Column -->
-        <div class="wheel-col">
-          @for (d of wheelDays; track d.label; let idx = $index) {
-            <div 
-              class="wheel-item" 
-              [class.active]="(scheduleRoundTripTab === 'LEAVE_ON' ? selectedLeaveDayIndex : selectedReturnDayIndex) === idx" 
-              (click)="scheduleRoundTripTab === 'LEAVE_ON' ? selectedLeaveDayIndex = idx : selectedReturnDayIndex = idx">
-              {{ d.label }}
-            </div>
-          }
-        </div>
-
-        <!-- Hour Column -->
-        <div class="wheel-col">
-          @for (h of wheelHours; track h) {
-            <div 
-              class="wheel-item" 
-              [class.active]="(scheduleRoundTripTab === 'LEAVE_ON' ? selectedLeaveHour : selectedReturnHour) === h" 
-              (click)="scheduleRoundTripTab === 'LEAVE_ON' ? selectedLeaveHour = h : selectedReturnHour = h">
-              {{ h }}
-            </div>
-          }
-        </div>
-
-        <!-- Minute Column -->
-        <div class="wheel-col">
-          @for (m of wheelMinutes; track m) {
-            <div 
-              class="wheel-item" 
-              [class.active]="(scheduleRoundTripTab === 'LEAVE_ON' ? selectedLeaveMinute : selectedReturnMinute) === m" 
-              (click)="scheduleRoundTripTab === 'LEAVE_ON' ? selectedLeaveMinute = m : selectedReturnMinute = m">
-              {{ m }}
-            </div>
-          }
-        </div>
-
-        <!-- AM/PM Column -->
-        <div class="wheel-col">
-          @for (p of wheelPeriods; track p) {
-            <div 
-              class="wheel-item" 
-              [class.active]="(scheduleRoundTripTab === 'LEAVE_ON' ? selectedLeavePeriod : selectedReturnPeriod) === p" 
-              (click)="scheduleRoundTripTab === 'LEAVE_ON' ? selectedLeavePeriod = p : selectedReturnPeriod = p">
-              {{ p }}
-            </div>
-          }
-        </div>
-      </div>
-
-      <button class="sheet-confirm-btn" (click)="confirmSchedule()">
-        Confirm
-      </button>
+      <button class="primary-yellow-cta-btn full-width" (click)="confirmSchedule()">Confirm Schedule</button>
     </div>
   </div>
 
-  <!-- ========================================== -->
-  <!-- MODAL 2: PAYMENT MODE SELECTION BOTTOM SHEET -->
-  <!-- ========================================== -->
-  <div *ngIf="showPaymentModeModal" class="modal-backdrop-overlay" (click)="showPaymentModeModal = false">
-    <div class="bottom-sheet-dialog animate-slide-up" (click)="$event.stopPropagation()">
-      <div class="sheet-header">
-        <h2>Payment Mode</h2>
-      </div>
-
+  <!-- Payment Mode Modal (Figma Screen 4) -->
+  <div *ngIf="showPaymentModeModal" class="modal-backdrop-overlay animate-fade-in" (click)="showPaymentModeModal = false">
+    <div class="bottom-sheet payment-mode-sheet animate-slide-up" (click)="$event.stopPropagation()">
+      <div class="sheet-handle"></div>
+      <h2 class="sheet-title">Payment Mode</h2>
       <div class="payment-options-list">
-        <div class="pay-option-row" (click)="selectPaymentMode('Cash')">
-          <div class="pay-left-row">
-            <span class="pay-icon">💵</span>
-            <span class="pay-title">Cash to Driver</span>
+        <div class="pay-option-card" [class.selected]="paymentMode === 'Cash'" (click)="selectPaymentMode('Cash')">
+          <span class="pay-ico">💵</span>
+          <div class="pay-meta">
+            <strong>Cash</strong>
+            <span>Pay directly to driver after trip</span>
           </div>
-          <span class="radio-circle" [class.checked]="paymentMode === 'Cash'"></span>
-        </div>
-
-        <div class="pay-option-row" (click)="selectPaymentMode('Online')">
-          <div class="pay-left-row">
-            <span class="pay-icon">💳</span>
-            <span class="pay-title">Online Payment (Razorpay / UPI / Cards)</span>
+          <div class="pay-radio-circle">
+            <div class="radio-inner" *ngIf="paymentMode === 'Cash'"></div>
           </div>
-          <span class="radio-circle" [class.checked]="paymentMode === 'Online'"></span>
+        </div>
+        <div class="pay-option-card" [class.selected]="paymentMode === 'Online'" (click)="selectPaymentMode('Online')">
+          <span class="pay-ico">💳</span>
+          <div class="pay-meta">
+            <strong>Online</strong>
+            <span>Razorpay / UPI / Cards / Net Banking</span>
+          </div>
+          <div class="pay-radio-circle">
+            <div class="radio-inner" *ngIf="paymentMode === 'Online'"></div>
+          </div>
+        </div>
+      </div>
+      <button class="primary-yellow-cta-btn full-width" (click)="updatePaymentMode()">Update</button>
+    </div>
+  </div>
+
+  <!-- Add / Edit Stop Modal (Figma Multi-Stop Search) -->
+  <div *ngIf="showEditStopModal" class="modal-backdrop-overlay animate-fade-in" (click)="closeEditStopModal()">
+    <div class="bottom-sheet edit-stop-sheet animate-slide-up" (click)="$event.stopPropagation()">
+      <div class="sheet-handle"></div>
+      <h2 class="sheet-title">{{ hasStop ? 'Edit Stop' : 'Add Stop' }}</h2>
+      <p class="sheet-sub">Search and add a stop along your route</p>
+
+      <div class="stop-search-box">
+        <span class="search-ico">🔍</span>
+        <input 
+          type="text" 
+          class="stop-search-input" 
+          placeholder="Search stop address or landmark..." 
+          [(ngModel)]="stopSearchQuery"
+          (input)="onStopSearchInput()" />
+        <button *ngIf="stopSearchQuery" class="clear-search-btn" (click)="stopSearchQuery = ''; stopPlaceSuggestions = []">✕</button>
+      </div>
+
+      <!-- Google Places Suggestions -->
+      <div *ngIf="stopPlaceSuggestions.length > 0" class="stop-suggestions-container">
+        <div *ngFor="let p of stopPlaceSuggestions" class="stop-place-item" (click)="selectStopPlace(p)">
+          <span class="place-pin">📍</span>
+          <div class="place-info">
+            <strong class="place-name">{{ p.title }}</strong>
+            <span class="place-desc">{{ p.address }}</span>
+          </div>
         </div>
       </div>
 
-      <button class="sheet-confirm-btn" (click)="updatePaymentMode()">
-        Update
+      <div class="sheet-action-row">
+        <button *ngIf="hasStop" class="remove-btn-danger" (click)="removeStop($event)">Remove Stop</button>
+        <button class="confirm-btn primary-yellow-cta-btn" (click)="saveStopManual(stopSearchQuery)">
+          {{ hasStop ? 'Update Stop' : 'Add Stop' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ride Scheduled Success Modal (Figma Screen 6) -->
+  <div *ngIf="showRideScheduledSuccessModal" class="modal-backdrop-overlay animate-fade-in" (click)="dismissRideScheduledSuccess()">
+    <div class="bottom-sheet ride-scheduled-success-sheet animate-slide-up" (click)="$event.stopPropagation()">
+      <div class="sheet-handle"></div>
+      <div class="scheduled-car-badge-row">
+        <div class="scheduled-car-badge">🚕 📅</div>
+      </div>
+      <h2 class="sheet-title center-text">Ride Scheduled</h2>
+      <p class="sheet-sub center-text">
+        Your ride has been scheduled for <strong>{{ scheduleDisplayString }}</strong>.<br>
+        Driver details will be shared 10 min before your pickup time.
+      </p>
+      <button class="primary-yellow-cta-btn full-width" (click)="dismissRideScheduledSuccess()">
+        Got it
       </button>
     </div>
   </div>
 
-  <!-- ========================================== -->
-  <!-- MODAL 3: CONFIRM PICKUP BOTTOM SHEET (Rentals) -->
-  <!-- ========================================== -->
-  <div *ngIf="showConfirmPickupSheet" class="modal-backdrop-overlay" (click)="showConfirmPickupSheet = false">
-    <div class="bottom-sheet-dialog animate-slide-up" (click)="$event.stopPropagation()">
-      <div class="sheet-header">
-        <h2>Confirm your pickup</h2>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: RENTAL PACKAGE RULES & RESTRICTIONS (Screen 4)    -->
+  <!-- ======================================================== -->
+  <div *ngIf="showRentalRulesModal" class="modal-backdrop-overlay animate-fade-in" (click)="closeRentalRulesModal()">
+    <div class="bottom-sheet rules-modal-sheet animate-slide-up" (click)="$event.stopPropagation()">
+      <div class="sheet-handle"></div>
+      <h2 class="sheet-title">Rental package rules & restrictions</h2>
+      <p class="sheet-subtitle">
+        For usage beyond {{ selectedRentalPackage?.name || '4 hrs 40 km' }} package, additional fare will be applicable as per your selected category.
+      </p>
+
+      <!-- Rate Table -->
+      <div class="rules-rates-table">
+        <div class="rate-row header-row">
+          <span>Category</span>
+          <span>Extra km</span>
+          <span>Extra ride time</span>
+        </div>
+        <div class="rate-row">
+          <strong>Mini</strong>
+          <span>₹16.2/km</span>
+          <span>₹2.2/min</span>
+        </div>
+        <div class="rate-row">
+          <strong>Prime SUV</strong>
+          <span>₹20.6/km</span>
+          <span>₹3.2/min</span>
+        </div>
+        <div class="rate-row">
+          <strong>Prime Sedan</strong>
+          <span>₹18.44/km</span>
+          <span>₹2.7/min</span>
+        </div>
       </div>
 
-      <div class="confirm-pickup-addr-card">
-        <span class="route-dot green-dot"></span>
-        <span class="pickup-text">{{ pickupLocation }}</span>
-      </div>
+      <!-- Bullet Rules matching Figma -->
+      <ul class="rules-bullet-list">
+        <li>Rental can be used for local travels only. Package cannot be changed after booking is confirmed.</li>
+        <li>For usage beyond selected package, additional fare will be applicable as per rates above.</li>
+        <li>Additional GST applicable on fare. Toll will be added in final bill if applicable; please pay parking fee when required.</li>
+        <li>For rides with intermediate stopover, advance booking fee of Rs 100 will be added to Total Fare.</li>
+        <li>Base fare amount is the minimum bill amount a customer has to pay for the package.</li>
+      </ul>
 
-      <button class="sheet-confirm-btn" (click)="showConfirmPickupSheet = false; openReviewBooking()">
-        Continue to Review
-      </button>
+      <div class="sheet-action-row">
+        <button class="primary-yellow-cta-btn" (click)="closeRentalRulesModal()">Done</button>
+      </div>
     </div>
   </div>
 
-  <!-- ========================================== -->
-  <!-- MODAL 4: RENTAL PACKAGE RULES & RESTRICTIONS MODAL -->
-  <!-- ========================================== -->
-  <div *ngIf="showRentalRulesModal && selectedRentalPackage" class="modal-backdrop-overlay" (click)="showRentalRulesModal = false">
-    <div class="bottom-sheet-dialog full-dialog animate-slide-up" (click)="$event.stopPropagation()">
-      <div class="sheet-header">
-        <h2>{{ selectedRentalPackage.name }} Package Rules</h2>
-        <p class="sheet-sub">Base Fare includes {{ selectedRentalPackage.includedHours }} hrs and {{ selectedRentalPackage.includedKm }} km. Additional usage billed per policy.</p>
+  <!-- ======================================================== -->
+  <!-- MODAL: VEHICLE INFO SHEET (Screens 5, 6, 7)              -->
+  <!-- ======================================================== -->
+  <div *ngIf="activeVehicleInfoModal" class="modal-backdrop-overlay animate-fade-in" (click)="closeVehicleInfoModal()">
+    <div class="bottom-sheet vehicle-info-sheet animate-slide-up" (click)="$event.stopPropagation()">
+      <div class="sheet-handle"></div>
+      <div class="info-sheet-header">
+        <div class="veh-info-title-row">
+          <h2>{{ activeVehicleInfoModal.name }}</h2>
+          <span class="veh-emoji-large">{{ activeVehicleInfoModal.icon }}</span>
+        </div>
+        <p class="veh-info-desc">{{ activeVehicleInfoModal.description }}</p>
       </div>
 
-      <!-- Comparison Rate Table -->
-      <div class="rental-rates-table">
-        <div class="table-header-row">
-          <span>Rule Component</span>
-          <span>Configured Value</span>
+      <!-- 3 Feature Chips -->
+      <div class="veh-feature-chips-row">
+        <div class="feat-chip">
+          <span class="feat-icon">🛋️</span>
+          <span>{{ activeVehicleInfoModal.category === 'Hatchback' ? 'Comfy Hatch' : (activeVehicleInfoModal.category === 'Sedan' ? 'Spacious Sedans' : 'Extra Seats') }}</span>
         </div>
-        <div class="table-body-row">
-          <strong>Base Package Fare</strong>
-          <span>₹{{ selectedRentalPackage.basePackageFare }}</span>
+        <div class="feat-chip">
+          <span class="feat-icon">⭐</span>
+          <span>{{ activeVehicleInfoModal.category === 'Hatchback' ? 'Pocket Friendly' : 'Top Partners' }}</span>
         </div>
-        <div class="table-body-row">
-          <strong>Extra Km Rate</strong>
-          <span>₹{{ selectedRentalPackage.extraKmPrice }} /km</span>
-        </div>
-        <div class="table-body-row">
-          <strong>Extra Hour Rate</strong>
-          <span>₹{{ selectedRentalPackage.extraHourPrice }} /hr</span>
-        </div>
-        <div class="table-body-row">
-          <strong>Booking Fee</strong>
-          <span>₹{{ selectedRentalPackage.bookingFee }}</span>
+        <div class="feat-chip">
+          <span class="feat-icon">💳</span>
+          <span>Cashless Ride</span>
         </div>
       </div>
 
-      <div class="rules-bullets-list">
-        <p>• Rental can be used for local travels only. Package cannot be changed after booking is confirmed.</p>
-        <p>• Applicable GST ({{ selectedRentalPackage.taxPercentage }}%) included in fare quote.</p>
-        <p>• Toll and parking charges are payable directly by customer.</p>
-      </div>
-
-      <button class="sheet-confirm-btn" (click)="showRentalRulesModal = false">
-        Done
-      </button>
-    </div>
-  </div>
-
-  <!-- ========================================== -->
-  <!-- MODAL 5: VEHICLE INFO MODAL -->
-  <!-- ========================================== -->
-  <div *ngIf="activeVehicleInfoModal" class="modal-backdrop-overlay" (click)="closeVehicleInfo()">
-    <div class="bottom-sheet-dialog full-dialog animate-slide-up" (click)="$event.stopPropagation()">
-      <div class="vehicle-info-header">
-        <h2>{{ activeVehicleInfoModal.name }}</h2>
-        <p>{{ activeVehicleInfoModal.description }}</p>
-      </div>
-
-      <!-- Feature Badges -->
-      <div class="feature-badges-row">
-        <div class="feature-col">
-          <span class="f-icon">🚗</span>
-          <span>Comfy cars</span>
-        </div>
-        <div class="feature-col">
-          <span class="f-icon">💰</span>
-          <span>Pocket Friendly</span>
-        </div>
-        <div class="feature-col">
-          <span class="f-icon">💳</span>
-          <span>Cashless Rides</span>
-        </div>
-      </div>
-
-      <!-- Rate Card -->
+      <!-- Estimated Fare & Rate Breakdown -->
       <div class="rate-card-box">
-        <div class="est-row">
+        <div class="fare-main-row">
           <span>Estimated fare</span>
-          <strong class="est-val">₹{{ activeVehicleInfoModal.fare }}</strong>
+          <strong class="fare-num">₹{{ activeVehicleInfoModal.fare }}</strong>
         </div>
-
-        <div class="applied-rate-card">
-          <p class="rate-card-title">Applied Rate Details</p>
-          <div class="rate-item">
-            <span>Extra km fare</span>
+        <div class="rate-breakdown-sub">
+          <div class="sub-row">
+            <span>Base fare for 40 km</span>
+            <span>₹{{ activeVehicleInfoModal.fare - 19 }}</span>
+          </div>
+          <div class="sub-row">
+            <span>Extra km fare after 40 km</span>
             <span>₹{{ activeVehicleInfoModal.extraKmRate }} per km</span>
           </div>
-          <div class="rate-item">
-            <span>Extra time fare</span>
+          <div class="sub-row">
+            <span>Extra ride time fare after 4 hr</span>
             <span>₹{{ activeVehicleInfoModal.extraMinRate }} per min</span>
           </div>
-          <div class="rate-item">
+          <div class="sub-row">
             <span>Convenience Fees</span>
-            <span>₹18</span>
+            <span>₹19</span>
           </div>
         </div>
       </div>
 
-      <!-- Fleet Models List -->
-      <div class="fleet-models-box" *ngIf="activeVehicleInfoModal.fleet.length > 0">
-        <h4>Our Fleet</h4>
-        <p>{{ activeVehicleInfoModal.fleet.join(', ') }}</p>
+      <!-- Our Fleet -->
+      <div class="fleet-showcase-box">
+        <div class="fleet-title">Our fleet</div>
+        <div class="fleet-models-text">
+          {{ activeVehicleInfoModal.fleet?.join(', ') || 'Maruti Suzuki Dzire, Toyota Etios, Honda Amaze' }}
+        </div>
       </div>
 
-      <button class="sheet-confirm-btn" (click)="closeVehicleInfo()">
-        Done
-      </button>
+      <div class="sheet-action-row">
+        <button class="primary-yellow-cta-btn" (click)="closeVehicleInfoModal()">Done</button>
+      </div>
     </div>
   </div>
 
-  <!-- ========================================== -->
-  <!-- MODAL 6: "REVIEW BOOKING" BOTTOM SHEET (Authoritative Quotation) -->
-  <!-- ========================================== -->
-  <div *ngIf="showReviewBookingModal && selectedVehicle" class="modal-backdrop-overlay" (click)="closeReviewBooking()">
-    <div class="bottom-sheet-dialog review-sheet-scrollable animate-slide-up" (click)="$event.stopPropagation()">
-      <div class="review-top-bar">
-        <div class="vehicle-illustration-thumb">{{ selectedVehicle.icon }}</div>
-        <div class="review-vehicle-title">
-          <h2>{{ selectedVehicle.name }}</h2>
-          <p>{{ selectedVehicle.description }}</p>
+  <!-- ======================================================== -->
+  <!-- MODAL: REVIEW BOOKING SHEET (Screenshot 2 Screen 8)     -->
+  <!-- ======================================================== -->
+  <div *ngIf="showReviewBookingSheet" class="modal-backdrop-overlay animate-fade-in" (click)="closeReviewBookingSheet()">
+    <div class="bottom-sheet review-booking-sheet animate-slide-up" (click)="$event.stopPropagation()">
+      <div class="sheet-handle"></div>
+      
+      <div class="review-header-box">
+        <div class="car-headline">
+          <h2>{{ selectedVehicle?.name || 'Prime SUV' }}</h2>
+          <span class="car-badge-icon">{{ selectedVehicle?.icon || '🚘' }}</span>
+        </div>
+        <p class="car-desc">{{ selectedVehicle?.description || 'Spacious, high-comfort ride for intercity travel' }}</p>
+      </div>
+
+      <!-- Feature Chips -->
+      <div class="veh-feature-chips-row">
+        <div class="feat-chip">
+          <span class="feat-icon">🛋️</span>
+          <span>Comfort Seats</span>
+        </div>
+        <div class="feat-chip">
+          <span class="feat-icon">⭐</span>
+          <span>Top Rated</span>
+        </div>
+        <div class="feat-chip">
+          <span class="feat-icon">💳</span>
+          <span>Cashless Ride</span>
         </div>
       </div>
 
-      <!-- Feature Badges -->
-      <div class="feature-badges-row">
-        <div class="feature-col">
-          <span class="f-icon">🚗</span>
-          <span>Verified Fleet</span>
-        </div>
-        <div class="feature-col">
-          <span class="f-icon">💰</span>
-          <span>Best Rates</span>
-        </div>
-        <div class="feature-col">
-          <span class="f-icon">💳</span>
-          <span>{{ paymentMode }}</span>
+      <!-- Our Fleet -->
+      <div class="fleet-showcase-box">
+        <div class="fleet-title">Our fleet</div>
+        <div class="fleet-models-text">
+          {{ selectedVehicle?.fleet?.join(', ') || 'Toyota Innova, Maruti Suzuki Ertiga, Mahindra XUV' }}
         </div>
       </div>
 
-      <!-- Pickup & Drop Locations -->
-      <div class="route-summary-box">
-        <div class="route-item">
-          <span class="route-dot green-dot"></span>
-          <div>
-            <label>Pickup Location</label>
-            <p>{{ pickupLocation }}</p>
-          </div>
-        </div>
-        <div class="route-item">
-          <span class="route-dot red-dot"></span>
-          <div>
-            <label>Destination Location</label>
-            <p>{{ destinationLocation }}</p>
-          </div>
-        </div>
-        <div class="route-item">
-          <span class="cal-symbol">🕒</span>
-          <div>
-            <label>Schedule</label>
-            <p>{{ scheduleDisplayString }}</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Server-Authoritative Fare Itemized Breakdown -->
-      <div class="review-fare-card">
+      <!-- Estimated Fare Itemized Box -->
+      <div class="review-fare-breakdown-card">
         <div class="fare-header-row">
-          <span>Authoritative Server Quote</span>
-          <strong class="total-big">₹{{ estimatedFareDetails.totalFare }}</strong>
+          <div>
+            <h3>Estimated fare</h3>
+            <small>214 km, 1 day 7 hour</small>
+          </div>
+          <span class="total-fare-highlight">₹{{ selectedVehicle ? (selectedVehicle.fare * 12 + 450) : 15528 }}</span>
         </div>
-        <span class="sub-fare-tag" *ngIf="currentQuotation?.quotationExpiry">Quote valid till {{ currentQuotation?.quotationExpiry | date:'shortTime' }}</span>
 
-        <div class="fare-breakdown-table">
-          <div class="break-row" *ngIf="estimatedFareDetails.baseFare > 0">
-            <span>Base Fare</span>
-            <span>₹{{ estimatedFareDetails.baseFare }}</span>
+        <div class="fare-line-items">
+          <div class="line-item">
+            <span>Base Fare (&#64; ₹11.5/km)</span>
+            <span>₹{{ selectedVehicle ? (selectedVehicle.fare * 10) : 13352 }}</span>
           </div>
-          <div class="break-row" *ngIf="estimatedFareDetails.distanceAmount > 0">
-            <span>Distance Amount</span>
-            <span>₹{{ estimatedFareDetails.distanceAmount }}</span>
-          </div>
-          <div class="break-row" *ngIf="estimatedFareDetails.driverAllowance > 0">
+          <div class="line-item">
             <span>Driver Allowance</span>
-            <span>₹{{ estimatedFareDetails.driverAllowance }}</span>
+            <span>₹1120</span>
           </div>
-          <div class="break-row" *ngIf="estimatedFareDetails.nightAllowance > 0">
-            <span>Night Allowance</span>
-            <span>₹{{ estimatedFareDetails.nightAllowance }}</span>
+          <div class="line-item">
+            <span>Night time allowance</span>
+            <span>₹970</span>
           </div>
-          <div class="break-row" *ngIf="estimatedFareDetails.taxes > 0">
-            <span>Applicable Taxes (GST)</span>
-            <span>₹{{ estimatedFareDetails.taxes }}</span>
+          <div class="line-item">
+            <span>Taxes</span>
+            <span>₹45</span>
           </div>
-          <div class="break-row" *ngIf="estimatedFareDetails.convenienceFee > 0">
-            <span>Platform & Convenience Fee</span>
-            <span>₹{{ estimatedFareDetails.convenienceFee }}</span>
+          <div class="line-item">
+            <span>Convenience Fees</span>
+            <span>₹41</span>
           </div>
+        </div>
+
+        <p class="fare-disclaimer">
+          Excludes toll costs, parking, permits and state tax. Extra fare may apply if you don't end trip at destination.
+        </p>
+      </div>
+
+      <!-- Ride Inclusions -->
+      <div class="review-section-box">
+        <h4>Ride inclusions</h4>
+        <div class="inclusions-list">
+          <div class="inc-item">✔ Regularly audited cars</div>
+          <div class="inc-item">✔ 24x7 on-road assistance</div>
+          <div class="inc-item">✔ Real time tracking</div>
         </div>
       </div>
 
-      <!-- Payment Mode Selector inside Review Sheet -->
-      <div class="pay-method-toggle-box">
-        <label>Selected Payment Method</label>
-        <div class="toggle-buttons-row">
-          <button 
-            type="button" 
-            class="pay-btn" 
-            [class.active]="paymentMode === 'Cash'" 
-            (click)="paymentMode = 'Cash'">
-            💵 Cash
-          </button>
-          <button 
-            type="button" 
-            class="pay-btn" 
-            [class.active]="paymentMode === 'Online'" 
-            (click)="paymentMode = 'Online'">
-            💳 Online (Razorpay)
-          </button>
-        </div>
+      <!-- Rules & Restrictions -->
+      <div class="review-section-box">
+        <h4>Rules & Restrictions</h4>
+        <ul class="bullet-list-sm">
+          <li>Excludes toll costs, parking, permits and state tax</li>
+          <li>₹122/hr will be charged for additional hours</li>
+          <li>₹19/km will be charged for extra km</li>
+          <li>Driver allowance per 24 hours - ₹585</li>
+        </ul>
       </div>
 
-      <!-- Sticky Bottom Booking Confirmation Button -->
-      <button 
-        class="sheet-confirm-btn" 
-        [disabled]="isBookingSubmitting" 
-        (click)="submitRealBooking()">
-        {{ isBookingSubmitting ? 'Confirming with Server...' : ('Confirm Booking • ₹' + estimatedFareDetails.totalFare) }}
-      </button>
-    </div>
-  </div>
+      <!-- Terms and Conditions -->
+      <div class="review-section-box">
+        <h4>Terms and Conditions</h4>
+        <ul class="bullet-list-sm">
+          <li>Excludes toll costs, parking, permits and state tax</li>
+          <li>Night time allowance (11:00 PM - 06:00 AM) - ₹244/night</li>
+          <li>Extra fare may apply if you don't end trip at {{ destinationSearchQuery || 'destination' }}</li>
+        </ul>
+      </div>
 
-  <!-- ========================================== -->
-  <!-- MODAL 7: RIDE SCHEDULED CONFIRMATION DIALOG -->
-  <!-- ========================================== -->
-  <div *ngIf="showRideScheduledSuccessModal" class="modal-backdrop-overlay">
-    <div class="success-alert-card animate-slide-up">
-      <div class="success-car-icon">🚕</div>
-      <h2>Ride Scheduled Successfully!</h2>
-      <p>Booking Number: <strong>{{ confirmedBookingReference?.bookingNumber }}</strong></p>
-      <p>A driver will be assigned 10 mins before your scheduled time ({{ scheduleDisplayString }}).</p>
-      <button class="sheet-confirm-btn" (click)="closeRideScheduledDialog()">
-        View in My Bookings
-      </button>
+      <!-- Final Booking CTA Button -->
+      <div class="sheet-action-row sticky-review-cta">
+        <button class="primary-yellow-cta-btn" (click)="confirmOutstationFromReview()">
+          Book {{ selectedVehicle?.name || 'Prime SUV' }} • ₹{{ selectedVehicle?.fare || 225 }}
+        </button>
+      </div>
     </div>
   </div>
 

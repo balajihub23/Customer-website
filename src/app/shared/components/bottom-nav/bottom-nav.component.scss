@@ -5,6 +5,7 @@
   transform: translateX(-50%);
   width: 100%;
   max-width: 480px;
+  box-sizing: border-box;
   height: 64px;
   background-color: var(--surface);
   border-top: 1px solid var(--border);

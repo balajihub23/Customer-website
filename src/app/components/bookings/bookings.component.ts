@@ -12,6 +12,7 @@ import {
 } from '../../core/services/booking.service';
 import { WebSocketService, BookingLifecycleEvent } from '../../core/services/websocket.service';
 import { AuthService } from '../../core/services/auth.service';
+import { ThemeService } from '../../core/services/theme.service';
 import { BottomNavComponent } from '../../shared/components/bottom-nav/bottom-nav.component';
 
 declare var L: any;
@@ -24,6 +25,7 @@ declare var L: any;
   styleUrl: './bookings.component.scss'
 })
 export class BookingsComponent implements OnInit, OnDestroy {
+  public themeService = inject(ThemeService);
   private platformId = inject(PLATFORM_ID);
   private bookingService = inject(BookingService);
   private wsService = inject(WebSocketService);
