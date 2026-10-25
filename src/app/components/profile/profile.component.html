@@ -7,16 +7,30 @@
     </header>
 
     <main class="profile-content animate-fade-in">
-      <!-- Dark Hero Card -->
-      <div class="profile-hero-card">
+      <!-- Dark Hero Card for Logged In Customer -->
+      <div *ngIf="isLoggedIn()" class="profile-hero-card">
         <div class="hero-top">
           <div class="avatar-wrapper">
-            <div class="initials-avatar">{{ (customerProfile.fullName || 'HE').substring(0, 2).toUpperCase() }}</div>
+            <div class="initials-avatar">{{ getInitials() }}</div>
           </div>
           <div class="hero-info">
-            <h3 class="driver-name">{{ customerProfile.fullName || 'hello' }}</h3>
+            <h3 class="driver-name">{{ customerProfile.fullName || 'Valued Customer' }}</h3>
             <p class="driver-role">Customer Account</p>
-            <p class="driver-phone">+91 {{ customerProfile.phone || '7656412300' }}</p>
+            <p *ngIf="customerProfile.phone" class="driver-phone">+91 {{ customerProfile.phone }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Guest / Not Logged In Hero Card -->
+      <div *ngIf="!isLoggedIn()" class="profile-hero-card guest-card">
+        <div class="hero-top">
+          <div class="avatar-wrapper">
+            <div class="initials-avatar guest-avatar">👤</div>
+          </div>
+          <div class="hero-info">
+            <h3 class="driver-name">Welcome to Rentron</h3>
+            <p class="driver-role">Log in to view profile & bookings</p>
+            <button class="login-quick-btn" (click)="goToLogin()">Log In / Sign Up ➔</button>
           </div>
         </div>
       </div>
@@ -112,10 +126,13 @@
         </div>
       </div>
 
-      <!-- Logout Button -->
+      <!-- Action Section -->
       <div class="action-section">
-        <button class="btn-logout" (click)="onLogout()">
+        <button *ngIf="isLoggedIn()" class="btn-logout" (click)="onLogout()">
           <span class="icon-logout">↳]</span> Logout
+        </button>
+        <button *ngIf="!isLoggedIn()" class="btn-login-cta" (click)="goToLogin()">
+          <span>🔑</span> Log In / Sign Up
         </button>
       </div>
     </main>
@@ -133,22 +150,22 @@
       <div class="info-card">
         <div class="info-field">
           <span class="field-lbl">Full Name</span>
-          <span class="field-val strong">{{ customerProfile.fullName || 'hello' }}</span>
+          <span class="field-val strong">{{ customerProfile.fullName || 'Not provided' }}</span>
         </div>
         <div class="info-field">
           <span class="field-lbl">Phone Number</span>
           <div class="field-val-row">
-            <span class="field-val strong">+91 {{ customerProfile.phone || '7656412300' }}</span>
+            <span class="field-val strong">{{ customerProfile.phone ? ('+91 ' + customerProfile.phone) : 'Not provided' }}</span>
             <span class="check-badge">✓</span>
           </div>
         </div>
         <div class="info-field">
           <span class="field-lbl">Email Address</span>
-          <span class="field-val">{{ customerProfile.email || 'customer@rentron.com' }}</span>
+          <span class="field-val">{{ customerProfile.email || 'Not provided' }}</span>
         </div>
         <div class="info-field">
           <span class="field-lbl">City</span>
-          <span class="field-val">{{ customerProfile.city || 'Noida' }}</span>
+          <span class="field-val">{{ customerProfile.city || 'Not provided' }}</span>
         </div>
         <div class="info-field no-border">
           <span class="field-lbl">Gender</span>

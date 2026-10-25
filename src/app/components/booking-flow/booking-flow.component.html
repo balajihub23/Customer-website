@@ -37,7 +37,12 @@
       <div id="bookingFlowMap" class="booking-flow-map"></div>
       <button class="recenter-map-btn" (click)="recenterMap()" title="Recenter on Pickup">📍</button>
       <div class="nearby-cabs-badge" *ngIf="activeCategory !== 'EQUIPMENT'">
-        <span>{{ selectedVehicle?.icon || '🚖' }} {{ selectedVehicle?.name || 'Ride' }}: {{ selectedVehicle?.nearbyDriversCount || 18 }} nearby ({{ selectedVehicle?.eta || '2-3 min away' }})</span>
+        <span *ngIf="selectedVehicleDriversCount > 0">
+          {{ selectedVehicle?.icon || '🚖' }} {{ selectedVehicle?.name || 'Ride' }}: {{ selectedVehicleDriversCount }} nearby ({{ selectedVehicle?.eta || 'Nearby' }})
+        </span>
+        <span *ngIf="selectedVehicleDriversCount === 0">
+          {{ selectedVehicle?.icon || '🚖' }} {{ selectedVehicle?.name || 'Ride' }}: No drivers nearby
+        </span>
       </div>
     </div>
 
@@ -412,7 +417,12 @@
       <div id="bookingFlowMap" class="booking-flow-map"></div>
       <button class="recenter-map-btn" (click)="recenterMap()" title="Recenter">📍</button>
       <div class="nearby-cabs-badge">
-        <span>{{ selectedVehicle?.icon || '🚖' }} {{ selectedVehicle?.name || 'Ride' }}: {{ selectedVehicle?.nearbyDriversCount || 18 }} nearby</span>
+        <span *ngIf="selectedVehicleDriversCount > 0">
+          {{ selectedVehicle?.icon || '🚖' }} {{ selectedVehicle?.name || 'Ride' }}: {{ selectedVehicleDriversCount }} nearby
+        </span>
+        <span *ngIf="selectedVehicleDriversCount === 0">
+          {{ selectedVehicle?.icon || '🚖' }} {{ selectedVehicle?.name || 'Ride' }}: No drivers nearby
+        </span>
       </div>
     </div>
 
@@ -430,7 +440,7 @@
           
           <!-- Yellow Nearby Badge for SUV matching Figma -->
           <div *ngIf="selectedVehicle?.id === v.id" class="drivers-nearby-yellow-badge">
-            <span class="yellow-dot">●</span> {{ v.nearbyDriversCount !== undefined ? v.nearbyDriversCount : 0 }} drivers nearby
+            <span class="yellow-dot">●</span> {{ (v.nearbyDriversCount || 0) > 0 ? (v.nearbyDriversCount + ' drivers nearby') : 'No drivers nearby' }}
           </div>
 
           <div class="card-content-row">

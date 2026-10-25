@@ -154,6 +154,22 @@ export class CustomerProfileComponent implements OnInit {
   }
 
   loadProfile(): void {
+    if (!this.authService.isLoggedIn()) {
+      this.customerProfile = {
+        fullName: '',
+        phone: '',
+        email: '',
+        city: '',
+        language: 'English',
+        dob: '',
+        gender: 'Male',
+        address: '',
+        profilePhotoUrl: ''
+      };
+      this.syncEditForm();
+      return;
+    }
+
     const user = this.authService.getUser();
     if (user) {
       this.customerProfile = {
@@ -177,10 +193,48 @@ export class CustomerProfileComponent implements OnInit {
           this.customerProfile = { ...this.customerProfile, ...data };
           this.syncEditForm();
         }
+      },
+      error: (err) => {
+        if (err.status === 401) {
+          this.authService.clearSession();
+          this.customerProfile = {
+            fullName: '',
+            phone: '',
+            email: '',
+            city: '',
+            language: 'English',
+            dob: '',
+            gender: 'Male',
+            address: '',
+            profilePhotoUrl: ''
+          };
+          this.syncEditForm();
+        }
       }
     });
   }
 
+  isLoggedIn(): boolean {
+    return this.authService.isLoggedIn();
+  }
+
+  goToLogin(): void {
+    this.router.navigate(['/auth']);
+  }
+
+  getInitials(): string {
+    const name = (this.customerProfile.fullName || '').trim();
+    if (!name) {
+      return this.customerProfile.phone ? this.customerProfile.phone.substring(0, 2) : 'CU';
+    }
+    const parts = name.split(' ');
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  }
+
+  
   syncEditForm(): void {
     this.editForm = {
       fullName: this.customerProfile.fullName || '',
@@ -230,6 +284,10 @@ export class CustomerProfileComponent implements OnInit {
   }
 
   navigateTo(view: ProfileSubView): void {
+    if (!this.isLoggedIn() && (view === 'PERSONAL_INFO' || view === 'SAVED_ADDRESS' || view === 'EDIT_PERSONAL_INFO')) {
+      this.router.navigate(['/auth']);
+      return;
+    }
     this.currentView = view;
     if (view === 'EDIT_PERSONAL_INFO') {
       this.syncEditForm();

@@ -36,6 +36,11 @@ export class CustomerHeaderComponent implements OnInit {
   fetchedLocation: string = '';
 
   ngOnInit(): void {
+    if (!this.authService.isLoggedIn()) {
+      this.fetchedCustomerName = '';
+      return;
+    }
+
     const user = this.authService.getUser();
     if (user && (user.fullName || user.name || user.firstName)) {
       this.fetchedCustomerName = user.fullName || user.name || user.firstName;
@@ -46,6 +51,12 @@ export class CustomerHeaderComponent implements OnInit {
         const data = profile?.data || profile;
         if (data && data.fullName) {
           this.fetchedCustomerName = data.fullName;
+        }
+      },
+      error: (err) => {
+        if (err.status === 401) {
+          this.authService.clearSession();
+          this.router.navigate(['/splash']);
         }
       }
     });
@@ -73,11 +84,11 @@ export class CustomerHeaderComponent implements OnInit {
   }
 
   get displayName(): string {
-    return this.fetchedCustomerName || this.userName || this.customerName || 'Suren';
+    return this.fetchedCustomerName || this.userName || this.customerName || 'Customer';
   }
 
   get displayLocation(): string {
-    return this.currentLocation || this.locationName || this.fetchedLocation || 'Sector 18, Noida';
+    return this.currentLocation || this.locationName || this.fetchedLocation || 'Select Location';
   }
 
   handleLocationClick(): void {

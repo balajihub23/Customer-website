@@ -71,6 +71,7 @@ export class BookingFlowComponent implements OnInit, AfterViewInit, OnDestroy {
   isSearchingPlaces: boolean = false;
   nearbyActiveDrivers: any[] = [];
   isFetchingNearbyDrivers: boolean = false;
+  initialRideId: string = '';
 
   // Step 1: Location Access & Contact Modal State (Screenshot 1)
   showLocationPermissionModal: boolean = false;
@@ -209,6 +210,9 @@ export class BookingFlowComponent implements OnInit, AfterViewInit, OnDestroy {
         else if (c === 'EQUIPMENT') this.activeCategory = 'EQUIPMENT';
         else this.activeCategory = 'DAILY_RIDES';
       }
+      if (params['rideId'] || params['ride'] || params['product']) {
+        this.initialRideId = String(params['rideId'] || params['ride'] || params['product']).toLowerCase();
+      }
       if (params['pickup']) {
         this.pickupLocation = params['pickup'];
       }
@@ -304,7 +308,11 @@ export class BookingFlowComponent implements OnInit, AfterViewInit, OnDestroy {
       });
 
       this.plotGooglePickupMarker();
-      this.plotGoogleNearbyCabs();
+      if (this.nearbyActiveDrivers && this.nearbyActiveDrivers.length > 0) {
+        this.plotGoogleNearbyCabs(this.nearbyActiveDrivers);
+      } else {
+        this.loadNearbyDrivers();
+      }
 
       if (this.currentStep === 'SELECT_VEHICLE' && this.hasConfirmedDestination) {
         this.drawGoogleRoute();
@@ -409,7 +417,9 @@ export class BookingFlowComponent implements OnInit, AfterViewInit, OnDestroy {
       } else if (code === 'PROD_MINI') {
         matching = drivers.filter(d => 
           (d.selectedVehicleType || '').toUpperCase().includes('MINI') || 
+          (d.selectedVehicleType || '').toUpperCase().includes('CAR') || 
           (d.category || '').toUpperCase().includes('HATCHBACK') ||
+          (d.category || '').toUpperCase().includes('CAR') ||
           (d.selectedMachineryModel || '').toLowerCase().includes('wagonr')
         );
       } else if (code === 'PROD_SEDAN') {
@@ -458,31 +468,106 @@ export class BookingFlowComponent implements OnInit, AfterViewInit, OnDestroy {
     this.googleCabMarkers.forEach(m => m.setMap(null));
     this.googleCabMarkers = [];
 
-    const cabOffsets = [
-      { dLat: 0.0035, dLng: 0.0028, title: 'Auto' },
-      { dLat: -0.0028, dLng: 0.0035, title: 'Bike' },
-      { dLat: 0.0042, dLng: -0.0032, title: 'Mini' },
-      { dLat: -0.0038, dLng: -0.0025, title: 'Sedan' },
-      { dLat: 0.0018, dLng: 0.0045, title: 'SUV' }
-    ];
+    const drivers = driversList !== undefined ? driversList : this.nearbyActiveDrivers;
+    if (!drivers || !Array.isArray(drivers) || drivers.length === 0) {
+      // If no active drivers available in location, do NOT show any markers
+      return;
+    }
 
-    cabOffsets.forEach(c => {
+    drivers.forEach(driver => {
+      const lat = Number(driver.latitude);
+      const lng = Number(driver.longitude);
+      if (isNaN(lat) || isNaN(lng) || (lat === 0 && lng === 0)) return;
+
+      const vehicleType = driver.selectedVehicleType || driver.category || 'Car';
+      const modelName = driver.selectedMachineryModel || driver.vehicleName || '';
+      const emoji = this.getVehicleEmoji(vehicleType, modelName);
+      const markerIcon = this.getVehicleMarkerIcon(emoji, vehicleType);
+
       const marker = new google.maps.Marker({
-        position: { lat: this.pickupLat + c.dLat, lng: this.pickupLng + c.dLng },
+        position: { lat, lng },
         map: this.googleMap,
-        title: c.title,
-        icon: {
-          path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-          scale: 4,
-          fillColor: '#EAB308',
-          fillOpacity: 1,
-          strokeColor: '#000000',
-          strokeWeight: 1.5,
-          rotation: Math.floor(Math.random() * 360)
-        }
+        title: `${driver.fullName || 'Driver'} • ${vehicleType}`,
+        icon: markerIcon,
+        zIndex: 10
       });
+
+      const infoContent = `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; padding: 4px 6px; line-height: 1.4; min-width: 140px;">
+          <div style="font-weight: 700; color: #111827; display: flex; align-items: center; gap: 6px; font-size: 14px;">
+            <span>${emoji}</span> <span>${driver.fullName || 'Driver'}</span>
+          </div>
+          <div style="color: #4b5563; font-size: 12px; margin-top: 2px;">
+            ${vehicleType} ${modelName ? '• ' + modelName : ''}
+          </div>
+          <div style="color: #059669; font-size: 11px; font-weight: 600; margin-top: 3px; display: flex; align-items: center; gap: 4px;">
+            <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #10B981;"></span>
+            Available Nearby ${driver.distanceKm !== undefined ? '(' + driver.distanceKm + ' km)' : ''}
+          </div>
+        </div>
+      `;
+
+      const infoWindow = new google.maps.InfoWindow({ content: infoContent });
+      marker.addListener('click', () => {
+        infoWindow.open(this.googleMap, marker);
+      });
+
       this.googleCabMarkers.push(marker);
     });
+  }
+
+  getVehicleEmoji(vehicleType?: string, model?: string): string {
+    const v = (vehicleType || '').toLowerCase();
+    const m = (model || '').toLowerCase();
+    // Prioritize selectedVehicleType first
+    if (v.includes('car')) return '🚗';
+    if (v.includes('bike') || v.includes('motorcycle')) return '🛵';
+    if (v.includes('scooter')) return '🛵';
+    if (v.includes('auto') || v.includes('rickshaw')) return '🛺';
+    if (v.includes('jcb') || v.includes('machinery') || v.includes('crane') || v.includes('truck') || v.includes('equipment')) return '🚜';
+    // Fallback to checking model string
+    if (m.includes('bike') || m.includes('scooter') || m.includes('activa')) return '🛵';
+    if (m.includes('auto')) return '🛺';
+    if (m.includes('jcb') || m.includes('excavator') || m.includes('crane') || m.includes('truck')) return '🚜';
+    return '🚗'; // Default is Car
+  }
+
+  getVehicleMarkerIcon(emoji: string, vehicleType: string): any {
+    const isDark = this.themeService.isDarkMode();
+    const bgFill = isDark ? '#1F2937' : '#FFFFFF';
+    const borderStroke = '#F59E0B'; // Amber accent
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="46" height="46" viewBox="0 0 46 46">
+        <defs>
+          <filter id="cabShadow" x="-25%" y="-25%" width="150%" height="150%">
+            <feDropShadow dx="0" dy="2.5" stdDeviation="3" flood-color="#000000" flood-opacity="0.35"/>
+          </filter>
+        </defs>
+        <circle cx="23" cy="23" r="19" fill="${bgFill}" stroke="${borderStroke}" stroke-width="2.5" filter="url(#cabShadow)"/>
+        <text x="23" y="30" font-size="21" text-anchor="middle" font-family="'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif">${emoji}</text>
+      </svg>
+    `;
+    return {
+      url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
+      scaledSize: new google.maps.Size(46, 46),
+      anchor: new google.maps.Point(23, 23)
+    };
+  }
+
+  private selectInitialOrPreferredVehicle(available: DynamicVehicleCard[]): void {
+    if (!available || available.length === 0) return;
+    let selected: DynamicVehicleCard | undefined;
+    if (this.initialRideId) {
+      selected = available.find(v => 
+        (v.code && v.code.toLowerCase().includes(this.initialRideId)) ||
+        (v.name && v.name.toLowerCase().includes(this.initialRideId)) ||
+        (v.category && v.category.toLowerCase().includes(this.initialRideId))
+      );
+    }
+    if (!selected) {
+      selected = available.find(v => v.code === 'PROD_SUV') || available[0];
+    }
+    this.selectedVehicle = selected;
   }
 
   drawGoogleRoute(): void {
@@ -1097,8 +1182,7 @@ loadBookingSettingsAndMapKey(): void {
     ];
     this.updateAllVehiclesEstimates();
     const available = this.displayedVehiclesList;
-    const suvCar = available.find(v => v.code === 'PROD_SUV') || available[0];
-    this.selectedVehicle = suvCar || this.vehiclesList[0];
+    this.selectInitialOrPreferredVehicle(available);
   }
 
   buildVehicleCards(): void {
@@ -1165,8 +1249,7 @@ loadBookingSettingsAndMapKey(): void {
 
     this.updateAllVehiclesEstimates();
     const available = this.displayedVehiclesList;
-    const suvCar = available.find(v => v.code === 'PROD_SUV') || available[0];
-    this.selectedVehicle = suvCar || this.vehiclesList[0];
+    this.selectInitialOrPreferredVehicle(available);
   }
 
   setOutstationMode(mode: 'ONE_WAY' | 'ROUND_TRIP'): void {
@@ -1180,6 +1263,10 @@ loadBookingSettingsAndMapKey(): void {
     this.selectedRentalPackage = pkg;
     this.updateAllVehiclesEstimates();
     this.recalculateAuthoritativeQuote();
+  }
+
+  get selectedVehicleDriversCount(): number {
+    return (this.selectedVehicle && this.selectedVehicle.nearbyDriversCount !== undefined) ? this.selectedVehicle.nearbyDriversCount : 0;
   }
 
   selectVehicle(v: DynamicVehicleCard): void {

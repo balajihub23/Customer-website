@@ -7,6 +7,7 @@ import { BottomNavComponent } from '../../shared/components/bottom-nav/bottom-na
 import { BookingService } from '../../core/services/booking.service';
 import { CustomerService } from '../../core/services/customer.service';
 import { GoogleMapService, AutoCompletePlace } from '../../core/services/google-map.service';
+import { AuthService } from '../../core/services/auth.service';
 
 declare var L: any;
 declare var google: any;
@@ -27,6 +28,7 @@ export interface LocationItem {
 })
 export class HomeComponent implements OnInit, OnDestroy {
   private googleMapService = inject(GoogleMapService);
+  private authService = inject(AuthService);
   isDetectingGPS: boolean = false;
   isSearchingPlaces: boolean = false;
   googlePlacesSuggestions: AutoCompletePlace[] = [];
@@ -34,8 +36,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   private platformId = inject(PLATFORM_ID);
   
   activeTab: 'construction' | 'ride' = 'construction';
-  userName: string = 'Suren';
-  selectedLocation: string = 'Selaiyur, East Tambaram';
+  userName: string = 'Customer';
+  selectedLocation: string = 'Detecting location...';
 
   // Work Location Modal state (search | adjust_map | confirm_details)
   showLocationModal: boolean = false;
@@ -82,17 +84,111 @@ export class HomeComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    if (!this.authService.isLoggedIn()) {
+      console.warn('No active customer session. Redirecting to splash screen.');
+      this.router.navigate(['/splash']);
+      return;
+    }
+
     this.customerService.getProfile().subscribe({
-      next: (profile) => {
-        if (profile?.fullName) {
+      next: (res: any) => {
+        const profile = res?.data || res;
+        if (profile && profile.fullName) {
           this.userName = profile.fullName;
+        } else if (!profile) {
+          this.authService.clearSession();
+          this.router.navigate(['/splash']);
+        }
+      },
+      error: (err) => {
+        if (err.status === 401) {
+          console.warn('Customer account not found in database. Redirecting to splash/register screen.');
+          this.authService.clearSession();
+          this.router.navigate(['/splash']);
         }
       }
     });
 
+    this.autoDetectCurrentLocation();
     this.loadRecentLocations();
     this.loadDynamicProducts();
     this.loadBookingSettingsAndMapKey();
+  }
+
+  autoDetectCurrentLocation(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    // 1. Check saved location from localStorage
+    const savedTitle = localStorage.getItem('rentron_current_title') || localStorage.getItem('title');
+    const savedAddress = localStorage.getItem('rentron_current_address') || localStorage.getItem('FullAddress');
+    const savedLat = localStorage.getItem('rentron_current_lat') || localStorage.getItem('latitude');
+    const savedLng = localStorage.getItem('rentron_current_lng') || localStorage.getItem('longitude');
+
+    if (savedTitle || savedAddress) {
+      this.selectedLocation = savedTitle || savedAddress || '';
+      if (savedAddress) {
+        this.workSiteDetails.address = savedAddress;
+        this.workSiteDetails.completeAddress = savedAddress;
+        this.workSiteDetails.landmark = savedTitle || '';
+      }
+      if (savedLat && savedLng) {
+        this.currentLat = parseFloat(savedLat);
+        this.currentLng = parseFloat(savedLng);
+      }
+    } else {
+      this.selectedLocation = 'Detecting location...';
+    }
+
+    // 2. Automatically detect device current GPS coordinates
+    if (navigator.geolocation) {
+      this.isDetectingGPS = true;
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          this.isDetectingGPS = false;
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          this.currentLat = lat;
+          this.currentLng = lng;
+
+          try {
+            const place = await this.googleMapService.getPlaceDetails(lat, lng, this.googleApiKey);
+            if (place && (place.title || place.address)) {
+              this.selectedLocation = place.title || place.address;
+              this.workSiteDetails.address = place.address;
+              this.workSiteDetails.completeAddress = place.address;
+              this.workSiteDetails.landmark = place.title;
+
+              localStorage.setItem('rentron_current_lat', lat.toString());
+              localStorage.setItem('rentron_current_lng', lng.toString());
+              localStorage.setItem('rentron_current_address', place.address);
+              localStorage.setItem('rentron_current_title', place.title);
+              localStorage.setItem('latitude', lat.toString());
+              localStorage.setItem('longitude', lng.toString());
+              localStorage.setItem('title', place.title);
+              localStorage.setItem('FullAddress', place.address);
+            }
+          } catch (e) {
+            console.warn('Error reverse geocoding current location:', e);
+          }
+        },
+        (err) => {
+          this.isDetectingGPS = false;
+          console.warn('GPS location detection skipped or unavailable:', err.message);
+          if (!this.selectedLocation || this.selectedLocation === 'Detecting location...') {
+            this.selectedLocation = 'Select Location';
+          }
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 60000
+        }
+      );
+    } else {
+      if (!this.selectedLocation || this.selectedLocation === 'Detecting location...') {
+        this.selectedLocation = 'Select Location';
+      }
+    }
   }
 
   loadDynamicProducts(): void {
