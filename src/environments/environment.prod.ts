@@ -1,0 +1,14 @@
+export const environment = {
+  production: true,
+  serverApi: 'https://rentron.in/rentron-gateway/rentron-svc-backend-1.0-SNAPSHOT',
+  mobileAppKey: 'rentron-customer-mobile-app-secret-key-492BC',
+  firebaseConfig: {
+    "apiKey": "AIzaSyAkQ6ZcQwz6kV0MiTo3WFUn5DEPu7WE6HM",
+    "authDomain": "rentron-d43bf.firebaseapp.com",
+    "projectId": "rentron-d43bf",
+    "storageBucket": "rentron-d43bf.firebasestorage.app",
+    "messagingSenderId": "186527279539",
+    "appId": "1:186527279539:web:b96e9a44ce5b8e748243c6",
+    "measurementId": "G-65H0KVE1NY"
+  }
+};
