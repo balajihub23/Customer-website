@@ -366,65 +366,99 @@
   <!-- DETAIL VIEW 4: COMPLETED TRIP VIEW -->
   <!-- ========================================== -->
   <section *ngIf="activeDetailView === 'COMPLETED' && selectedBooking" class="detail-full-view animate-slide-up">
+    <!-- Top Sticky Bar -->
     <div class="detail-top-nav">
-      <button class="back-circle-btn" (click)="closeDetailView()">←</button>
+      <button class="back-circle-btn" (click)="closeDetailView()" title="Back">
+        <span class="back-arrow-ico">←</span>
+      </button>
       <h2>Completed Trip</h2>
       <span class="spacer"></span>
     </div>
 
-    <div class="completed-trophy-banner">
-      <span class="trophy-emoji">🏁</span>
-      <h3>Trip Completed</h3>
-      <p>Booking Number: <strong>{{ selectedBooking.bookingNumber }}</strong></p>
-      <span class="paid-badge">Paid via {{ selectedBooking.paymentMethod }}</span>
-    </div>
+    <div class="detail-view-scroll-body">
+      <!-- Completed Celebration Header Card -->
+      <div class="completed-hero-card">
+        <div class="hero-header-row">
+          <div class="hero-left">
+            <div class="trophy-circle">🏁</div>
+            <div class="hero-titles">
+              <span class="status-kicker">TRIP COMPLETED</span>
+              <h3>{{ selectedBooking.productName || selectedBooking.bookingType || 'Rentron Ride' }}</h3>
+              <span class="booking-code-chip">#{{ selectedBooking.bookingNumber }}</span>
+            </div>
+          </div>
+          <div class="hero-right">
+            <span class="paid-status-badge">
+              <span class="green-dot">●</span> Paid via {{ selectedBooking.paymentMethod || 'CASH' }}
+            </span>
+          </div>
+        </div>
+      </div>
 
-    <!-- Final Fare Breakdown Card -->
-    <div class="fare-summary-card">
-      <h3>Final Fare Receipt</h3>
-      <div class="fare-row" *ngIf="selectedBooking.baseAmount">
-        <span>Base Fare</span>
-        <span>₹{{ selectedBooking.baseAmount }}</span>
-      </div>
-      <div class="fare-row" *ngIf="selectedBooking.distanceAmount">
-        <span>Distance Charges</span>
-        <span>₹{{ selectedBooking.distanceAmount }}</span>
-      </div>
-      <div class="fare-row" *ngIf="selectedBooking.timeAmount">
-        <span>Time Charges</span>
-        <span>₹{{ selectedBooking.timeAmount }}</span>
-      </div>
-      <div class="fare-row" *ngIf="selectedBooking.driverTip">
-        <span>Driver Tip</span>
-        <span>₹{{ selectedBooking.driverTip }}</span>
-      </div>
-      <div class="fare-row" *ngIf="selectedBooking.taxAmount">
-        <span>Taxes (GST)</span>
-        <span>₹{{ selectedBooking.taxAmount }}</span>
-      </div>
-      <div class="fare-row grand-total">
-        <span>Total Fare Paid</span>
-        <strong>₹{{ selectedBooking.finalFare || selectedBooking.totalAmount }}</strong>
-      </div>
-    </div>
+      <!-- Final Fare Receipt Card -->
+      <div class="fare-summary-card">
+        <div class="receipt-header">
+          <span class="receipt-icon">🧾</span>
+          <h3>Final Fare Receipt</h3>
+        </div>
 
-    <!-- Route Summary -->
-    <div class="route-detail-card compact">
-      <div class="route-point">
-        <span class="dot green-dot"></span>
-        <p>{{ selectedBooking.pickupAddressText }}</p>
-      </div>
-      <div class="route-point">
-        <span class="dot red-dot"></span>
-        <p>{{ selectedBooking.destinationAddressText }}</p>
-      </div>
-    </div>
+        <div class="fare-breakdown-table">
+          <div class="fare-row" *ngIf="selectedBooking.baseAmount">
+            <span class="fare-label">Base Fare</span>
+            <span class="fare-val">₹{{ selectedBooking.baseAmount | number:'1.2-2' }}</span>
+          </div>
+          <div class="fare-row" *ngIf="selectedBooking.distanceAmount">
+            <span class="fare-label">Distance Charges</span>
+            <span class="fare-val">₹{{ selectedBooking.distanceAmount | number:'1.2-2' }}</span>
+          </div>
+          <div class="fare-row" *ngIf="selectedBooking.timeAmount">
+            <span class="fare-label">Time Charges</span>
+            <span class="fare-val">₹{{ selectedBooking.timeAmount | number:'1.2-2' }}</span>
+          </div>
+          <div class="fare-row" *ngIf="selectedBooking.driverTip">
+            <span class="fare-label">Driver Tip</span>
+            <span class="fare-val">₹{{ selectedBooking.driverTip | number:'1.2-2' }}</span>
+          </div>
+          <div class="fare-row" *ngIf="selectedBooking.taxAmount">
+            <span class="fare-label">Taxes & GST</span>
+            <span class="fare-val">₹{{ selectedBooking.taxAmount | number:'1.2-2' }}</span>
+          </div>
 
-    <!-- Download Invoice CTA -->
-    <div class="detail-bottom-actions">
-      <button class="download-invoice-yellow-btn" (click)="downloadInvoice(selectedBooking.id)">
-        📄 View & Download Tax Invoice
-      </button>
+          <div class="fare-row grand-total-row">
+            <div class="total-title-col">
+              <strong class="total-label">Total Fare Paid</strong>
+              <span class="inclusive-txt">Inclusive of all taxes</span>
+            </div>
+            <strong class="total-fare-big">₹{{ (selectedBooking.finalFare || selectedBooking.totalAmount || 0) | number:'1.2-2' }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Route Summary Card -->
+      <div class="route-detail-card compact">
+        <div class="route-point">
+          <div class="marker-dot green-marker"></div>
+          <div class="point-content">
+            <span class="point-lbl">PICKUP LOCATION</span>
+            <p class="point-addr">{{ selectedBooking.pickupAddressText || 'Pickup Location' }}</p>
+          </div>
+        </div>
+        <div class="route-divider-line"></div>
+        <div class="route-point">
+          <div class="marker-dot red-marker"></div>
+          <div class="point-content">
+            <span class="point-lbl">DESTINATION</span>
+            <p class="point-addr">{{ selectedBooking.destinationAddressText || 'Drop Location' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Download Invoice CTA -->
+      <div class="detail-bottom-actions">
+        <button class="download-invoice-yellow-btn" (click)="downloadInvoice(selectedBooking.id)">
+          <span>📄 View & Download Tax Invoice</span>
+        </button>
+      </div>
     </div>
   </section>
 

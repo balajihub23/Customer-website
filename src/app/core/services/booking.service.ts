@@ -1,7 +1,7 @@
 import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, of, catchError, map } from 'rxjs';
+import { Observable, BehaviorSubject, of, catchError, map, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AuthService } from './auth.service';
 
@@ -100,6 +100,7 @@ export interface Booking {
   contractorId?: number;
   vehicleId?: number;
   productId: number;
+  productName?: string;
   bookingType: 'LOCAL' | 'SCHEDULED' | 'RENTAL' | 'OUTSTATION' | 'HEAVY_EQUIPMENT' | string;
   rentalPackage?: string;
   outstationTripType?: 'ONE_WAY' | 'ROUND_TRIP';
@@ -121,6 +122,7 @@ export interface Booking {
     | string;
   paymentMethod: 'Cash' | 'Online' | 'CASH' | 'ONLINE' | string;
   paymentStatus: 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED' | string;
+  otpVerifiedAt?: string;
   bookingDate?: string;
   bookingTime?: string;
   scheduledPickupAt?: string;
@@ -399,8 +401,15 @@ export class BookingService {
    * Search nearby active drivers around coordinates
    * GET /api/v1/drivers/search-nearby
    */
-  searchNearbyDrivers(latitude: number, longitude: number, radiusKm: number = 25.0, vehicleType?: string): Observable<ApiResponse<any[]>> {
-    let url = `${this.baseUrl}/api/v1/drivers/search-nearby?latitude=${latitude}&longitude=${longitude}&radiusKm=${radiusKm}`;
+  rateDriver(bookingId: number, score: number, comment?: string): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(`${this.baseUrl}/api/v1/bookings/${bookingId}/rate`, { score, comment });
+  }
+
+  searchNearbyDrivers(latitude: number, longitude: number, radiusKm?: number, vehicleType?: string): Observable<ApiResponse<any[]>> {
+    let url = `${this.baseUrl}/api/v1/drivers/search-nearby?latitude=${latitude}&longitude=${longitude}`;
+    if (radiusKm !== undefined && radiusKm !== null && radiusKm > 0) {
+      url += `&radiusKm=${radiusKm}`;
+    }
     if (vehicleType) {
       url += `&vehicleType=${encodeURIComponent(vehicleType)}`;
     }
@@ -410,89 +419,42 @@ export class BookingService {
   // Fallback Machinery Catalog helper
   setSelectedMachinery(item: MachineryItem | string): void {
     if (typeof item === 'string') {
-      this.selectedMachinerySubject.next({
-        id: item,
-        name: item,
-        category: 'Construction',
-        type: 'Heavy Equipment',
-        hourlyRate: 1000,
-        dailyRate: 8000,
-        advancePercentage: 30,
-        image: '🚜',
-        description: 'Heavy equipment machinery'
-      });
+      const found = this.cachedMachineryCatalog.find(
+        m => m.id === item || String(m.id).toLowerCase() === item.toLowerCase()
+      );
+      if (found) {
+        this.selectedMachinerySubject.next(found);
+      } else {
+        this.selectedMachinerySubject.next({
+          id: item,
+          name: item,
+          category: 'Construction',
+          type: 'Heavy Equipment',
+          hourlyRate: 1000,
+          dailyRate: 8000,
+          advancePercentage: 30,
+          image: '🚜',
+          description: 'Heavy equipment machinery'
+        });
+      }
     } else {
       this.selectedMachinerySubject.next(item);
     }
   }
 
-  getMachineryCatalog(): MachineryItem[] {
-    return [
-      {
-        id: 'jcb-3dx',
-        name: 'JCB 3DX Super Eco',
-        category: 'Construction',
-        type: 'Backhoe Loader',
-        hourlyRate: 1000,
-        dailyRate: 8000,
-        advancePercentage: 30,
-        image: '🚜',
-        capacity: '1.1 cu.m Bucket',
-        specs: '76 HP • 4.7m Dig Depth',
-        description: 'Versatile heavy equipment for excavation, trenching, loading, and earthmoving.'
-      },
-      {
-        id: 'mini-excavator',
-        name: 'Mini Excavator (3-5 Ton)',
-        category: 'Construction',
-        type: 'Excavator',
-        hourlyRate: 850,
-        dailyRate: 6800,
-        advancePercentage: 30,
-        image: '🏗️',
-        capacity: '0.2 cu.m Bucket',
-        specs: '40 HP • Compact Digging',
-        description: 'Ideal for urban sites, landscaping, narrow trenching, and utility works.'
-      },
-      {
-        id: 'heavy-excavator',
-        name: 'Heavy Excavator (20 Ton)',
-        category: 'Construction',
-        type: 'Excavator',
-        hourlyRate: 1800,
-        dailyRate: 14400,
-        advancePercentage: 30,
-        image: '🏗️',
-        capacity: '1.2 cu.m Bucket',
-        specs: '140 HP • High Output Digging',
-        description: 'Heavy duty crawler excavator for mining, quarrying, and foundation excavation.'
-      },
-      {
-        id: 'road-roller',
-        name: 'Vibratory Soil Roller',
-        category: 'Construction',
-        type: 'Compactor',
-        hourlyRate: 1200,
-        dailyRate: 9600,
-        advancePercentage: 30,
-        image: '🚜',
-        capacity: '10 Ton Compactor',
-        specs: 'Single Drum • High Impact',
-        description: 'Used for soil compaction, road base preparation, and asphalt rolling.'
-      },
-      {
-        id: 'mobile-crane',
-        name: 'Hydraulic Mobile Crane',
-        category: 'Construction',
-        type: 'Crane',
-        hourlyRate: 2200,
-        dailyRate: 17600,
-        advancePercentage: 30,
-        image: '🏗️',
-        capacity: '25 Ton Lifting',
-        specs: 'Telescopic Boom • 32m Reach',
-        description: 'For heavy lifting, structural erection, and equipment placing.'
-      }
-    ];
+  private cachedMachineryCatalog: MachineryItem[] = [];
+
+  getMachineryCatalog(): Observable<ApiResponse<MachineryItem[]>> {
+    return this.http.get<ApiResponse<MachineryItem[]>>(`${this.baseUrl}/api/v1/products/machinery-catalog`).pipe(
+      tap((res: ApiResponse<MachineryItem[]>) => {
+        if (res && res.data && Array.isArray(res.data)) {
+          this.cachedMachineryCatalog = res.data;
+        }
+      })
+    );
+  }
+
+  getLoadedMachineryCatalog(): MachineryItem[] {
+    return this.cachedMachineryCatalog;
   }
 }

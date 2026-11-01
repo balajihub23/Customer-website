@@ -34,6 +34,8 @@ export class WebSocketService implements OnDestroy {
   private readonly baseUrl = environment.serverApi;
   private ws: WebSocket | null = null;
   private bookingEventSubject = new Subject<BookingLifecycleEvent>();
+  private driverStatusSubject = new Subject<any>();
+  driverStatus$: Observable<any> = this.driverStatusSubject.asObservable();
   private activeSubscriptions = new Map<string, string>();
   private subCounter = 0;
   private reconnectTimer: any = null;
@@ -73,6 +75,7 @@ export class WebSocketService implements OnDestroy {
           if (this.watchedBookingId) {
             this.sendSubscribe(`/topic/booking/${this.watchedBookingId}`);
           }
+          this.sendSubscribe('/topic/drivers/status');
           if (userId) {
             this.sendSubscribe(`/topic/user-events/${userId}`);
           }
@@ -87,6 +90,9 @@ export class WebSocketService implements OnDestroy {
               if (jsonStart !== -1 && jsonEnd !== -1) {
                 const jsonStr = raw.substring(jsonStart, jsonEnd + 1);
                 const data = JSON.parse(jsonStr);
+                if (data && (data.eventType === 'DRIVER_ONLINE' || data.eventType === 'DRIVER_OFFLINE' || data.type === 'DRIVER_ONLINE' || data.type === 'DRIVER_OFFLINE' || (raw && raw.includes('/topic/drivers/status')))) {
+                  this.driverStatusSubject.next(data);
+                }
 
                 if (data && (data.eventType || data.bookingId || data.type)) {
                   const mappedEvent: BookingLifecycleEvent = {
@@ -131,6 +137,13 @@ export class WebSocketService implements OnDestroy {
     };
 
     tryConnect(primaryWsUrl);
+  }
+
+  subscribeToDriverStatus(): void {
+    const destination = '/topic/drivers/status';
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.sendSubscribe(destination);
+    }
   }
 
   subscribeToBooking(bookingId: number): void {

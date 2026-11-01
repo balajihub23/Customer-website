@@ -68,9 +68,12 @@ export class BookingFlowComponent implements OnInit, AfterViewInit, OnDestroy {
   razorpayKey: string = 'rzp_test_mGa2SfsXusZ9u7';
   googlePlacesSuggestions: AutoCompletePlace[] = [];
   private placesSub: Subscription | null = null;
+  private driverStatusSub: Subscription | null = null;
+  private driverSyncTimer: any = null;
   isSearchingPlaces: boolean = false;
   nearbyActiveDrivers: any[] = [];
   isFetchingNearbyDrivers: boolean = false;
+  bookingSettings: any = null;
   initialRideId: string = '';
 
   // Step 1: Location Access & Contact Modal State (Screenshot 1)
@@ -162,7 +165,7 @@ export class BookingFlowComponent implements OnInit, AfterViewInit, OnDestroy {
   selectedReturnMinute: string = '00';
   selectedReturnPeriod: string = 'PM';
 
-  scheduleDisplayString: string = 'Today, 02:30 PM';
+  scheduleDisplayString: string = '';
   roundTripDisplayString: string = '';
   scheduledPickupIso: string = '';
   scheduledReturnIso: string = '';
@@ -230,6 +233,16 @@ export class BookingFlowComponent implements OnInit, AfterViewInit, OnDestroy {
     });
     this.checkInitialLocationPermission();
     this.loadBookingSettingsAndMapKey();
+    this.wsService.connect();
+    this.wsService.subscribeToDriverStatus();
+    this.driverStatusSub = this.wsService.driverStatus$.subscribe(() => {
+      this.loadNearbyDrivers();
+    });
+    if (isPlatformBrowser(this.platformId)) {
+      this.driverSyncTimer = setInterval(() => {
+        this.loadNearbyDrivers();
+      }, 6000);
+    }
   }
 
   ngAfterViewInit(): void {
@@ -375,8 +388,9 @@ export class BookingFlowComponent implements OnInit, AfterViewInit, OnDestroy {
     const qLng = lng !== undefined ? lng : this.pickupLng;
     if (!qLat || !qLng) return;
 
+    const radius = this.bookingSettings?.initialRadiusKm || this.bookingSettings?.maxRadiusKm;
     this.isFetchingNearbyDrivers = true;
-    this.bookingService.searchNearbyDrivers(qLat, qLng, 25.0).subscribe({
+    this.bookingService.searchNearbyDrivers(qLat, qLng, radius).subscribe({
       next: (res) => {
         this.isFetchingNearbyDrivers = false;
         if (res && res.success && Array.isArray(res.data)) {
@@ -709,6 +723,7 @@ loadBookingSettingsAndMapKey(): void {
     this.bookingService.getBookingSettings().subscribe({
       next: (res) => {
         if (res && res.data) {
+          this.bookingSettings = res.data;
           if (res.data.mapKey) {
             this.googleApiKey = res.data.mapKey;
             if (isPlatformBrowser(this.platformId)) {
@@ -987,8 +1002,16 @@ loadBookingSettingsAndMapKey(): void {
     this.selectedLeaveMinute = '30';
     this.selectedLeavePeriod = period;
 
-    this.scheduleDisplayString = `Today, ${this.selectedLeaveHour}:${this.selectedLeaveMinute} ${this.selectedLeavePeriod}`;
-    this.computeIsoTimestamps();
+    // Default to Instant Ride (Ride Now). scheduledPickupIso remains empty until customer schedules.
+    this.scheduledPickupIso = '';
+    this.scheduleDisplayString = '';
+  }
+
+  clearSchedule(e?: Event): void {
+    if (e) e.stopPropagation();
+    this.scheduledPickupIso = '';
+    this.scheduleDisplayString = '';
+    this.recalculateAuthoritativeQuote();
   }
 
   computeIsoTimestamps(): void {

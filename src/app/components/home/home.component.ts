@@ -198,15 +198,18 @@ export class HomeComponent implements OnInit, OnDestroy {
       next: (res) => {
         const products = res?.data || (Array.isArray(res) ? res : []);
         if (products && products.length > 0) {
-          const mach = products.filter((p: any) => p.productType === 'HEAVY_EQUIPMENT' || p.productType === 'JCB');
-          if (mach.length > 0) {
-            this.machineryCategories = mach.map((p: any) => ({
-              id: p.code || String(p.id),
-              name: p.name,
-              icon: p.category === 'EXCAVATOR' || p.category === 'CRANE' ? '🏗️' : '🚜',
-              rate: '₹1,000/hr'
-            }));
-          }
+          this.bookingService.getMachineryCatalog().subscribe({
+            next: (catRes) => {
+              if (catRes && catRes.data && catRes.data.length > 0) {
+                this.machineryCategories = catRes.data.map((m: any) => ({
+                  id: m.code || m.id,
+                  name: m.name,
+                  icon: m.image && m.image.length <= 4 ? m.image : (m.category === 'Excavator' || m.category === 'Crane' ? '🏗️' : '🚜'),
+                  rate: `₹${m.hourlyRate?.toLocaleString('en-IN') || '1,000'}/hr`
+                }));
+              }
+            }
+          });
 
           const rides = products.filter((p: any) => p.productType === 'RIDE' || p.productType === 'CAR' || p.productType === 'AUTO' || p.productType === 'BIKE');
           if (rides.length > 0) {

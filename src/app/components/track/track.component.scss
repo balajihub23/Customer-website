@@ -1462,3 +1462,125 @@
   margin-bottom: 10px;
   box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
 }
+
+/* Payment Mode Selector in Pay View */
+.payment-mode-cards-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 16px 0;
+
+  .pay-mode-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: #cbd5e1;
+      background: #f8fafc;
+    }
+
+    &.selected {
+      border-color: #f59e0b;
+      background: #fffbeb;
+
+      .radio-circle .inner-dot {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .radio-circle {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid #cbd5e1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+
+      .inner-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #f59e0b;
+        opacity: 0;
+        transform: scale(0);
+        transition: all 0.2s ease;
+      }
+    }
+
+    .pay-mode-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+
+      strong {
+        font-size: 14px;
+        font-weight: 700;
+        color: #0f172a;
+      }
+
+      span {
+        font-size: 11.5px;
+        color: #64748b;
+        margin-top: 2px;
+      }
+    }
+
+    .badge-recommended {
+      background: #dcfce7;
+      color: #15803d;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 10px;
+    }
+  }
+}
+
+/* Rating Compliment Tags & Feedback Label */
+.rating-feedback-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #f59e0b;
+  margin: 8px 0 0 0;
+}
+
+.compliment-tags-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin: 6px 0;
+
+  .compliment-chip {
+    padding: 6px 12px;
+    border-radius: 18px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    font-size: 12px;
+    font-weight: 600;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #f1f5f9;
+    }
+
+    &.selected {
+      background: #fef3c7;
+      border-color: #f59e0b;
+      color: #92400e;
+      font-weight: 700;
+    }
+  }
+}

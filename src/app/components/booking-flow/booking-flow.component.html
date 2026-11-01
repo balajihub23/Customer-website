@@ -473,22 +473,23 @@
         </div>
       </div>
 
-      <!-- Bottom Action Row: [ Now (clock) ] + [ Book Prime SUV • ₹225 ] -->
+      <!-- Bottom Action Row: [ Schedule / Sched Time ] + [ Book Prime SUV • ₹225 ] -->
       <div class="bottom-action-buttons-row">
         <button class="now-clock-btn" [class.is-scheduled]="scheduledPickupIso" (click)="openScheduleModal()" title="Schedule Trip">
           <ng-container *ngIf="!scheduledPickupIso">
-            <span class="clock-icon">🕒</span>
-            <span class="clock-label">Now</span>
+            <span class="clock-icon">📅</span>
+            <span class="clock-label">Schedule</span>
           </ng-container>
           <ng-container *ngIf="scheduledPickupIso">
             <span class="sched-pill-text">📅 {{ scheduleDisplayString }}</span>
+            <span class="sched-clear-btn" (click)="clearSchedule($event)" title="Ride Now">✕</span>
           </ng-container>
         </button>
         <button 
           class="primary-yellow-cta-btn" 
           [disabled]="isBookingSubmitting"
           (click)="confirmAndDispatchBooking()">
-          {{ isBookingSubmitting ? 'Creating Booking...' : ('Book ' + (selectedVehicle?.name || 'Ride') + ' • ₹' + (selectedVehicle?.fare || '225')) }}
+          {{ isBookingSubmitting ? 'Creating Booking...' : ((scheduledPickupIso ? 'Schedule ' : 'Book ') + (selectedVehicle?.name || 'Ride') + ' • ₹' + (selectedVehicle?.fare || '225')) }}
         </button>
       </div>
     </div>
@@ -635,6 +636,7 @@
       </div>
 
       <button class="primary-yellow-cta-btn full-width" (click)="confirmSchedule()">Confirm Schedule</button>
+      <button *ngIf="scheduledPickupIso" class="secondary-clear-schedule-btn full-width" style="margin-top: 10px; background: transparent; border: 1px solid #d1d5db; padding: 12px; border-radius: 12px; font-weight: 600; cursor: pointer;" (click)="clearSchedule(); closeScheduleModal()">⚡ Reset to Ride Now (Instant Search)</button>
     </div>
   </div>
 

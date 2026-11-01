@@ -33,6 +33,10 @@ export class TrackComponent implements OnInit, AfterViewInit, OnDestroy {
   // Radar & Search States (Screenshot 3)
   radarState: 'SEARCHING' | 'NO_DRIVERS' | 'CONFIRMED' | 'CANCELLED' | 'SCHEDULED' | 'PAY_FOR_RIDE' | 'PAYMENT_DONE' | 'RATING' = 'SEARCHING';
   selectedDriverTip: number = 20;
+  selectedPaymentMode: 'ONLINE' | 'CASH' = 'ONLINE';
+  isProcessingPayment: boolean = false;
+  complimentOptions: string[] = ['✨ Clean Vehicle', '🚗 Safe Driving', '⏱️ On Time', '😊 Polite & Friendly'];
+  selectedCompliments: string[] = [];
   driverRatingScore: number = 5;
   driverRatingNote: string = '';
   selectedAddonTip: number = 30;
@@ -161,6 +165,9 @@ export class TrackComponent implements OnInit, AfterViewInit, OnDestroy {
       this.radarState = 'CONFIRMED';
       if (this.searchTimeoutHandle) clearTimeout(this.searchTimeoutHandle);
       setTimeout(() => this.initOrUpdateMap(), 250);
+    } else if (status === 'NO_DRIVER_AVAILABLE') {
+      this.radarState = 'NO_DRIVERS';
+      if (this.searchTimeoutHandle) clearTimeout(this.searchTimeoutHandle);
     } else {
       this.radarState = 'SEARCHING';
       this.startSearchTimeout();
@@ -236,11 +243,57 @@ export class TrackComponent implements OnInit, AfterViewInit, OnDestroy {
     } else if (event.eventType === 'STARTED') {
       if (this.booking) this.booking.status = 'STARTED';
       this.showArrivedNotification = false;
-    } else if (event.eventType === 'COMPLETED') {
-      if (this.booking) this.booking.status = 'COMPLETED';
-      this.radarState = 'PAY_FOR_RIDE';
+    } else if (event.eventType === 'COMPLETED' || event.eventType === 'RIDE_COMPLETED') {
+      if (this.booking) {
+        this.booking.status = 'COMPLETED';
+        if (event.payload?.finalFare) {
+          this.booking.finalFare = event.payload.finalFare;
+        }
+      }
+      if (this.booking?.paymentStatus === 'PAID') {
+        this.radarState = 'RATING';
+      } else {
+        this.radarState = 'PAY_FOR_RIDE';
+      }
+    } else if (event.eventType === 'PAYMENT_CONFIRMED') {
+      if (this.booking) {
+        this.booking.paymentStatus = 'PAID';
+        if (event.payload?.paymentMethod) {
+          this.booking.paymentMethod = event.payload.paymentMethod;
+        }
+      }
+      this.radarState = 'RATING';
     } else if (event.eventType === 'CANCELLED') {
       this.radarState = 'CANCELLED';
+    }
+  }
+
+  
+  showOtpBadge(): boolean {
+    if (!this.booking) return false;
+    if ((this.booking as any)?.otpVerifiedAt) return false;
+    const status = (this.booking.status || '').toUpperCase();
+    if (['STARTED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'].includes(status)) return false;
+    return true;
+  }
+
+  toggleCompliment(tag: string): void {
+    const idx = this.selectedCompliments.indexOf(tag);
+    if (idx !== -1) {
+      this.selectedCompliments.splice(idx, 1);
+    } else {
+      this.selectedCompliments.push(tag);
+    }
+  }
+
+  getRatingFeedbackLabel(score: number): string {
+    switch (score) {
+      case 5: return '⭐ Excellent Service!';
+      case 4: return '👍 Good Experience';
+      case 3: return '👌 Average';
+      case 2: return '👎 Below Expectations';
+      case 1: return '⚠️ Poor Service';
+      default: return '';
     }
   }
 
@@ -452,8 +505,78 @@ export class TrackComponent implements OnInit, AfterViewInit, OnDestroy {
     this.driverRatingScore = score;
   }
 
-  processPayment(): void {
-    this.radarState = 'PAYMENT_DONE';
+  loadRazorpayScript(callback: () => void): void {
+    if ((window as any).Razorpay) {
+      callback();
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => callback();
+    script.onerror = (err) => console.error('Failed to load Razorpay script', err);
+    document.head.appendChild(script);
+  }
+
+  processPayment(mode?: 'ONLINE' | 'CASH'): void {
+    const paymentMode = mode || this.selectedPaymentMode;
+    const finalAmount = (this.booking?.finalFare || this.booking?.totalAmount || this.booking?.estimatedFare || 274) + this.selectedDriverTip;
+
+    if (paymentMode === 'CASH') {
+      alert('Please pay exact cash of ₹' + finalAmount + ' directly to driver. Driver will confirm receipt on their device.');
+      this.radarState = 'RATING';
+      return;
+    }
+
+    // Online Razorpay Payment
+    this.isProcessingPayment = true;
+    this.bookingService.getBookingSettings().subscribe({
+      next: (settingsRes) => {
+        const keyId = settingsRes?.data?.keyId || 'rzp_test_mGa2SfsXusZ9u7';
+        this.loadRazorpayScript(() => {
+          this.isProcessingPayment = false;
+          const options: any = {
+            key: keyId,
+            amount: Math.round(finalAmount * 100),
+            currency: 'INR',
+            name: 'Rentron',
+            description: 'Payment for Ride #' + (this.booking?.bookingNumber || this.bookingId),
+            prefill: {
+              name: 'Customer',
+              contact: '9876543210',
+              email: 'customer@rentron.com'
+            },
+            theme: { color: '#FFC107' },
+            handler: (response: any) => {
+              if (response.razorpay_payment_id) {
+                this.bookingService.verifyPaymentSignature({
+                  bookingId: this.bookingId!,
+                  razorpayOrderId: response.razorpay_order_id || ('order_' + Date.now()),
+                  razorpayPaymentId: response.razorpay_payment_id,
+                  razorpaySignature: response.razorpay_signature || 'mock_sig'
+                }).subscribe({
+                  next: () => {
+                    this.radarState = 'PAYMENT_DONE';
+                    setTimeout(() => {
+                      this.radarState = 'RATING';
+                    }, 1200);
+                  },
+                  error: () => {
+                    this.radarState = 'RATING';
+                  }
+                });
+              }
+            }
+          };
+          const rzp = new (window as any).Razorpay(options);
+          rzp.open();
+        });
+      },
+      error: () => {
+        this.isProcessingPayment = false;
+        alert('Could not initialize payment gateway. Please pay cash to driver.');
+      }
+    });
   }
 
   finishPaymentAndRate(): void {
@@ -461,7 +584,21 @@ export class TrackComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   submitRatingAndComplete(): void {
-    this.router.navigate(['/bookings'], { queryParams: { tab: 'Completed', activeId: this.bookingId } });
+    if (!this.bookingId) {
+      this.router.navigate(['/home']);
+      return;
+    }
+
+    const note = (this.driverRatingNote || '') + (this.selectedCompliments.length > 0 ? (' [' + this.selectedCompliments.join(', ') + ']') : '');
+    this.bookingService.rateDriver(this.bookingId, this.driverRatingScore, note).subscribe({
+      next: () => {
+        alert('Thank you for rating driver ' + this.driverName + '!');
+        this.router.navigate(['/bookings'], { queryParams: { tab: 'Completed', activeId: this.bookingId } });
+      },
+      error: () => {
+        this.router.navigate(['/bookings'], { queryParams: { tab: 'Completed', activeId: this.bookingId } });
+      }
+    });
   }
 
   cancelScheduledRide(): void {

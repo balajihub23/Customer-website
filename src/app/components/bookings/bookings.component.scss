@@ -1844,3 +1844,345 @@
     }
   }
 }
+
+/* ======================================================== */
+/* COMPLETED HERO & RECEIPT ENHANCED STYLING               */
+/* ======================================================== */
+.detail-full-view {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #f8fafc;
+  z-index: 1000;
+  overflow-y: auto;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+
+  .detail-top-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+
+    .back-circle-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #0f172a;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: #e2e8f0;
+      }
+
+      .back-arrow-ico {
+        line-height: 1;
+      }
+    }
+
+    h2 {
+      font-size: 17px;
+      font-weight: 800;
+      margin: 0;
+      color: #0f172a;
+    }
+
+    .spacer { width: 36px; }
+  }
+
+  .detail-view-scroll-body {
+    flex: 1;
+    padding: 16px 18px 90px;
+    overflow-y: auto;
+  }
+}
+
+.completed-hero-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 18px 20px;
+  border: 1.5px solid #e2e8f0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  margin-bottom: 16px;
+
+  .hero-header-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+
+    .hero-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex: 1;
+      min-width: 0;
+
+      .trophy-circle {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        background: #fef3c7;
+        color: #b45309;
+        font-size: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+      }
+
+      .hero-titles {
+        flex: 1;
+        min-width: 0;
+
+        .status-kicker {
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 0.6px;
+          color: #16a34a;
+          text-transform: uppercase;
+          margin-bottom: 2px;
+          display: block;
+        }
+
+        h3 {
+          font-size: 16px;
+          font-weight: 800;
+          color: #0f172a;
+          margin: 0 0 4px 0;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .booking-code-chip {
+          font-size: 11px;
+          font-weight: 700;
+          color: #64748b;
+          background: #f1f5f9;
+          padding: 3px 8px;
+          border-radius: 6px;
+          display: inline-block;
+          max-width: 100%;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+    }
+
+    .hero-right {
+      flex-shrink: 0;
+
+      .paid-status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: #dcfce7;
+        color: #15803d;
+        font-size: 11px;
+        font-weight: 800;
+        padding: 5px 10px;
+        border-radius: 12px;
+        white-space: nowrap;
+
+        .green-dot {
+          font-size: 8px;
+          color: #16a34a;
+        }
+      }
+    }
+  }
+}
+
+.fare-summary-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 18px 20px;
+  border: 1.5px solid #e2e8f0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  margin-bottom: 16px;
+
+  .receipt-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f1f5f9;
+
+    .receipt-icon {
+      font-size: 18px;
+    }
+
+    h3 {
+      font-size: 15px;
+      font-weight: 800;
+      color: #0f172a;
+      margin: 0;
+    }
+  }
+
+  .fare-breakdown-table {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .fare-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13.5px;
+
+      .fare-label {
+        color: #64748b;
+        font-weight: 500;
+      }
+
+      .fare-val {
+        color: #1e293b;
+        font-weight: 700;
+      }
+
+      &.grand-total-row {
+        margin-top: 8px;
+        padding-top: 12px;
+        border-top: 1.5px dashed #cbd5e1;
+
+        .total-title-col {
+          display: flex;
+          flex-direction: column;
+
+          .total-label {
+            font-size: 15px;
+            font-weight: 800;
+            color: #0f172a;
+          }
+
+          .inclusive-txt {
+            font-size: 10px;
+            color: #94a3b8;
+            font-weight: 500;
+            margin-top: 1px;
+          }
+        }
+
+        .total-fare-big {
+          font-size: 22px;
+          font-weight: 900;
+          color: #0f172a;
+          letter-spacing: -0.5px;
+        }
+      }
+    }
+  }
+}
+
+.route-detail-card.compact {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 16px 18px;
+  border: 1.5px solid #e2e8f0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  margin-bottom: 16px;
+
+  .route-point {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+
+    .marker-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-top: 3px;
+      flex-shrink: 0;
+
+      &.green-marker {
+        background: #22c55e;
+        box-shadow: 0 0 0 3px #dcfce7;
+      }
+
+      &.red-marker {
+        background: #ef4444;
+        box-shadow: 0 0 0 3px #fee2e2;
+      }
+    }
+
+    .point-content {
+      flex: 1;
+      min-width: 0;
+
+      .point-lbl {
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        color: #94a3b8;
+        text-transform: uppercase;
+        display: block;
+        margin-bottom: 2px;
+      }
+
+      .point-addr {
+        font-size: 13px;
+        font-weight: 600;
+        color: #1e293b;
+        line-height: 1.45;
+        margin: 0;
+        word-break: break-word;
+      }
+    }
+  }
+
+  .route-divider-line {
+    width: 2px;
+    height: 16px;
+    background: #cbd5e1;
+    margin: 3px 0 3px 5px;
+  }
+}
+
+.download-invoice-yellow-btn {
+  width: 100%;
+  height: 50px;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 800;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 6px 18px rgba(245, 158, 11, 0.35);
+  transition: all 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 8px 22px rgba(245, 158, 11, 0.45);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}

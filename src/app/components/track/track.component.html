@@ -118,7 +118,7 @@
       <div id="liveTrackingMap" class="full-live-map"></div>
 
       <!-- Floating Ride Start OTP Badge (Screenshot 4 left) -->
-      <div class="floating-otp-pill">
+      <div class="floating-otp-pill" *ngIf="showOtpBadge()">
         <div class="otp-number">{{ booking?.otp || '2024' }}</div>
         <div class="otp-caption">Ride Start OTP</div>
       </div>
@@ -130,7 +130,7 @@
     </div>
 
     <!-- Driver Arrived Alert Banner (Step 3) -->
-    <div *ngIf="booking?.status === 'ARRIVED' || showArrivedNotification" class="driver-arrived-alert animate-slide-up">
+    <div *ngIf="(booking?.status === 'ARRIVED' || showArrivedNotification) && showOtpBadge()" class="driver-arrived-alert animate-slide-up">
       <div class="arrived-icon">🔔</div>
       <div class="arrived-text">
         <strong>Driver has arrived!</strong>
@@ -398,8 +398,28 @@
         </div>
       </div>
 
-      <button class="primary-yellow-cta-btn full-width pay-btn-large" (click)="processPayment()">
-        Pay ₹{{ (booking?.totalAmount || booking?.estimatedFare || 385) + selectedDriverTip }} →
+      <!-- Payment Mode Selection -->
+      <div class="payment-mode-cards-box">
+        <label class="pay-mode-card" [class.selected]="selectedPaymentMode === 'ONLINE'" (click)="selectedPaymentMode = 'ONLINE'">
+          <div class="radio-circle"><div class="inner-dot"></div></div>
+          <div class="pay-mode-info">
+            <strong>💳 Pay Online via Razorpay</strong>
+            <span>UPI, QR Code, Cards, Netbanking</span>
+          </div>
+          <span class="badge-recommended">Instant</span>
+        </label>
+
+        <label class="pay-mode-card" [class.selected]="selectedPaymentMode === 'CASH'" (click)="selectedPaymentMode = 'CASH'">
+          <div class="radio-circle"><div class="inner-dot"></div></div>
+          <div class="pay-mode-info">
+            <strong>💵 Pay Cash to Driver</strong>
+            <span>Hand over exact cash to driver</span>
+          </div>
+        </label>
+      </div>
+
+      <button class="primary-yellow-cta-btn full-width pay-btn-large mt-3" [disabled]="isProcessingPayment" (click)="processPayment(selectedPaymentMode)">
+        {{ isProcessingPayment ? 'Connecting Payment Gateway...' : (selectedPaymentMode === 'ONLINE' ? 'Pay Online via Razorpay →' : 'Confirm Cash Payment →') }}
       </button>
     </div>
   </div>
@@ -444,6 +464,19 @@
             ★
           </span>
         </div>
+        <p class="rating-feedback-label">{{ getRatingFeedbackLabel(driverRatingScore) }}</p>
+      </div>
+
+      <!-- Quick Compliment Tags -->
+      <div class="compliment-tags-row">
+        <button 
+          *ngFor="let tag of complimentOptions" 
+          type="button"
+          class="compliment-chip" 
+          [class.selected]="selectedCompliments.includes(tag)"
+          (click)="toggleCompliment(tag)">
+          {{ tag }}
+        </button>
       </div>
 
       <textarea 
