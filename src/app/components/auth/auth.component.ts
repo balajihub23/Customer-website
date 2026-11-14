@@ -4,6 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { CustomerService } from '../../core/services/customer.service';
+import { WebSocketService } from '../../core/services/websocket.service';
+import { OnInit, OnDestroy } from '@angular/core';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-auth',
@@ -12,7 +15,11 @@ import { CustomerService } from '../../core/services/customer.service';
   templateUrl: './auth.component.html',
   styleUrl: './auth.component.scss'
 })
-export class AuthComponent {
+export class AuthComponent implements OnInit, OnDestroy {
+  private webSocketService = inject(WebSocketService);
+  private otpSubscription: Subscription | null = null;
+  testOtp: string = '';
+  showTestOtpBanner: boolean = false;
   private authService = inject(AuthService);
   private customerService = inject(CustomerService);
   private router = inject(Router);
@@ -39,6 +46,37 @@ export class AuthComponent {
   };
 
   cities = ['Chennai', 'Coimbatore', 'Madurai', 'Salem', 'Trichy', 'Bengaluru', 'Hyderabad'];
+  ngOnInit(): void {
+    this.webSocketService.connect();
+    this.otpSubscription = this.webSocketService.authOtp$.subscribe(event => {
+      if (event && event.otp) {
+        const cleanInput = this.phoneNumber.replace(/[^0-9]/g, '');
+        const eventClean = (event.cleanPhone || event.phone || '').replace(/[^0-9]/g, '');
+        if (!cleanInput || !eventClean || cleanInput.endsWith(eventClean) || eventClean.endsWith(cleanInput)) {
+          this.handleIncomingOtp(event.otp);
+        }
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.clearTimer();
+    if (this.otpSubscription) {
+      this.otpSubscription.unsubscribe();
+      this.otpSubscription = null;
+    }
+  }
+
+  handleIncomingOtp(otp: string): void {
+    if (!otp) return;
+    this.testOtp = otp;
+    this.showTestOtpBanner = true;
+    const digits = otp.split('');
+    digits.forEach((d: string, i: number) => {
+      if (i < 6) this.otpDigits[i] = d;
+    });
+  }
+
   languages = ['English (India)', 'Tamil (தமிழ்)', 'Hindi (हिंदी)', 'Telugu (తెలుగు)', 'Kannada (ಕನ್ನಡ)'];
 
   onPhoneInput(event: Event): void {
@@ -57,15 +95,17 @@ export class AuthComponent {
     this.errorMessage = '';
 
     this.authService.sendOtp(this.phoneNumber).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.loading = false;
         this.step = 'otp';
         this.startResendTimer();
+        if (res?.data?.testOtp) {
+          this.handleIncomingOtp(res.data.testOtp);
+        }
       },
-      error: () => {
+      error: (err) => {
         this.loading = false;
-        this.step = 'otp';
-        this.startResendTimer();
+        this.errorMessage = err?.error?.message || 'Failed to send SMS OTP. Please check your mobile number and try again.';
       }
     });
   }

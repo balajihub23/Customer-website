@@ -54,6 +54,17 @@
   <div *ngIf="step === 'otp'" class="auth-card otp-step">
     <button class="back-btn" (click)="goBack()">➔</button>
 
+    <!-- WebSocket Test OTP Banner -->
+    <div *ngIf="showTestOtpBanner" class="test-otp-banner">
+      <div class="test-otp-header">
+        <span class="test-badge">⚡ Test Mode (WebSocket OTP)</span>
+      </div>
+      <div class="test-otp-body">
+        <span>Received Code: <strong>{{ testOtp }}</strong></span>
+        <button type="button" class="auto-fill-btn" (click)="handleIncomingOtp(testOtp)">Auto-Filled ✓</button>
+      </div>
+    </div>
+
     <h1 class="auth-heading">Verify OTP</h1>
     <p class="auth-sub">Enter the 6-digit code sent to<br><strong>+91 {{ phoneNumber }}</strong></p>
 
