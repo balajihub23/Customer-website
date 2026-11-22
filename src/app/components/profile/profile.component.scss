@@ -3,9 +3,10 @@
   max-width: 480px;
   margin: 0 auto;
   min-height: 100vh;
+  min-height: 100dvh;
   background-color: var(--app-background, #0F172A);
   color: var(--text-primary, #F8FAFC);
-  padding-bottom: 85px;
+  padding-bottom: 110px;
   box-sizing: border-box;
   font-family: var(--font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
 }
@@ -69,7 +70,7 @@
 }
 
 .profile-content {
-  padding: 12px;
+  padding: 12px 12px 100px;
   width: 100%;
   box-sizing: border-box;
 }
@@ -282,7 +283,9 @@
 
 /* Action Section & Logout */
 .action-section {
-  margin-top: 20px;
+  margin-top: 24px;
+  margin-bottom: 24px;
+  padding-bottom: 24px;
   text-align: center;
 
   .btn-logout {
@@ -875,4 +878,18 @@
   &:hover {
     background: #F59E0B;
   }
+}
+
+/* Ensure Logout Button Clears Bottom Nav */
+.mobile-app-wrapper.profile-page {
+  padding-bottom: 110px !important;
+}
+
+.profile-content {
+  padding-bottom: 100px !important;
+}
+
+.action-section {
+  margin-bottom: 30px !important;
+  padding-bottom: 20px !important;
 }
