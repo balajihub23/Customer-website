@@ -7,7 +7,8 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "serve:ssr:customerWebsite": "node dist/customer-website/server/server.mjs"
+    "serve:ssr:customerWebsite": "node dist/customer-website/server/server.mjs",
+    "build:cordova": "ng build && npm --prefix ../customerCordova run sync"
   },
   "private": true,
   "dependencies": {
