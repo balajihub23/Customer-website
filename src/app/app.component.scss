@@ -8,7 +8,9 @@
 }
 
 :host-context([data-theme="dark"]),
-:host-context(.dark-mode) {
+:host-context(.dark-mode),
+[data-theme="dark"] :host,
+.dark-mode :host {
   background-color: #0F172A !important;
 }
 

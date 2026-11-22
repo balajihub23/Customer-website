@@ -1,4 +1,4 @@
-<div class="mobile-app-wrapper">
+<div class="mobile-app-wrapper" [class.dark-mode]="themeService.isDarkMode()">
   <header class="notifications-header">
     <div class="header-top">
       <button class="btn-back-icon" (click)="goBack()" title="Back">

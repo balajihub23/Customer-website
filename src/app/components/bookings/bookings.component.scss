@@ -2190,15 +2190,13 @@
 /* ========================================================================== */
 /* DARK THEME SYSTEM OVERRIDES (Customer Bookings & Booking Details)           */
 /* ========================================================================== */
-:host-context([data-theme="dark"]),
-:host-context(.dark-mode),
-[data-theme="dark"],
-.dark-mode {
-
-  .bookings-viewport {
-    background-color: #0F172A !important;
-    color: #F8FAFC !important;
-  }
+.bookings-viewport.dark-mode,
+:host-context([data-theme="dark"]) .bookings-viewport,
+:host-context(.dark-mode) .bookings-viewport,
+[data-theme="dark"] .bookings-viewport,
+.dark-mode .bookings-viewport {
+  background-color: #0F172A !important;
+  color: #F8FAFC !important;
 
   .bookings-header,
   .bookings-top-header {

@@ -180,7 +180,7 @@
       <div class="payment-mode-bar-row" (click)="openPaymentModeModal()">
         <span class="pm-label">Payment Mode</span>
         <button class="pm-value-btn">
-          <span class="pm-dot">●</span> {{ paymentMode }} ▾
+          <span class="pm-dot" [class.online-dot]="paymentMode === 'Online'">{{ paymentMode === 'Online' ? '💳' : '●' }}</span> {{ paymentMode }} ▾
         </button>
       </div>
 
@@ -313,7 +313,7 @@
         <div class="payment-mode-bar-row" (click)="openPaymentModeModal()">
           <span class="pm-label">Payment Mode</span>
           <button class="pm-value-btn">
-            <span class="pm-dot">●</span> {{ paymentMode }} ▾
+            <span class="pm-dot" [class.online-dot]="paymentMode === 'Online'">{{ paymentMode === 'Online' ? '💳' : '●' }}</span> {{ paymentMode }} ▾
           </button>
         </div>
 

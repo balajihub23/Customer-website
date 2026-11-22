@@ -87,8 +87,8 @@
               {{ b.bookingType === 'HEAVY_EQUIPMENT' ? '🚜' : (b.bookingType === 'RENTAL' ? '⏳' : '🚗') }}
             </div>
             <div class="veh-details">
-              <h4>{{ b.bookingType || 'Ride Booking' }}</h4>
-              <p class="schedule-sub">{{ b.scheduledPickupAt ? (b.scheduledPickupAt | date:'medium') : (b.bookingDate + ' ' + (b.bookingTime || '')) }}</p>
+              <h4>{{ b.productName || b.bookingType || 'Ride Booking' }}</h4>
+              <p class="schedule-sub">{{ b.scheduledPickupAt ? (b.scheduledPickupAt | date:'medium') : (b.bookingDate ? (b.bookingDate + (b.bookingTime ? (' • ' + b.bookingTime) : '')) : (b.createdAt ? (b.createdAt | date:'medium') : 'Trip Completed')) }}</p>
             </div>
             <div class="card-fare-box">
               <span class="fare-val">₹{{ b.finalFare || b.totalAmount }}</span>

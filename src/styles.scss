@@ -228,16 +228,24 @@ body {
   --border-color: #334155;
 }
 
-[data-theme="dark"] html,
-[data-theme="dark"] body,
-body.dark-mode {
+html[data-theme="dark"],
+html.dark-mode,
+body[data-theme="dark"],
+body.dark-mode,
+[data-theme="dark"] body {
   background-color: #0F172A !important;
   color: #F8FAFC !important;
 }
 
+[data-theme="dark"] app-root,
+body.dark-mode app-root,
+html[data-theme="dark"] app-root,
 [data-theme="dark"] .mobile-app-container,
-.mobile-app-container.dark-mode {
+.mobile-app-container.dark-mode,
+[data-theme="dark"] .mobile-app-wrapper,
+.mobile-app-wrapper.dark-mode {
   background-color: #0F172A !important;
+  color: #F8FAFC !important;
 }
 
 /* My Bookings Page Dark Theme */

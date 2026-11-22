@@ -95,13 +95,13 @@
       border: 1px solid rgba(245, 158, 11, 0.4);
 
       .notif-card-title {
-        color: #0F172A;
+        color: #0F172A !important;
       }
       .notif-card-msg {
-        color: #475569;
+        color: #334155 !important;
       }
       .notif-card-time {
-        color: #64748B;
+        color: #64748B !important;
       }
     }
 
@@ -205,11 +205,10 @@
 /* ========================================= */
 /* DARK THEME SCOPED OVERRIDES               */
 /* ========================================= */
-:host-context([data-theme="dark"]),
-:host-context(.dark-mode) {
-  .mobile-app-wrapper {
-    background-color: #0F172A !important;
-  }
+.mobile-app-wrapper.dark-mode,
+:host-context([data-theme="dark"]) .mobile-app-wrapper,
+:host-context(.dark-mode) .mobile-app-wrapper {
+  background-color: #0F172A !important;
 
   .notifications-header {
     background-color: #1E293B !important;

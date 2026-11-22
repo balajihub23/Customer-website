@@ -3,6 +3,7 @@ import { CommonModule, Location } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { NotificationService, AppNotification } from '../../core/services/notification.service';
 import { BottomNavComponent } from '../../shared/components/bottom-nav/bottom-nav.component';
+import { ThemeService } from '../../core/services/theme.service';
 
 @Component({
   selector: 'app-notifications',
@@ -15,6 +16,7 @@ export class NotificationsComponent {
   notificationService = inject(NotificationService);
   router = inject(Router);
   location = inject(Location);
+  public themeService = inject(ThemeService);
 
   goBack(): void {
     if (window.history.length > 1) {
