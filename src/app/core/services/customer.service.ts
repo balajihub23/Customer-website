@@ -1,7 +1,7 @@
 import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable, of, catchError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AuthService } from './auth.service';
 
@@ -39,7 +39,12 @@ export class CustomerService {
   }
 
   updateProfile(data: any): Observable<any> {
-    return this.http.put<any>(`${this.baseUrl}/api/v1/customers/me`, data);
+    if (!isPlatformBrowser(this.platformId) || !this.authService.getAccessToken()) {
+      return of({ success: true, message: 'Saved locally for guest session', data });
+    }
+    return this.http.put<any>(`${this.baseUrl}/api/v1/customers/me`, data).pipe(
+      catchError((err: any) => of({ success: false, error: err }))
+    );
   }
 
   getSavedAddresses(): Observable<any> {

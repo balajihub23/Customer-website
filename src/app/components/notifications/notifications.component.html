@@ -1,0 +1,55 @@
+<div class="mobile-app-wrapper">
+  <header class="notifications-header">
+    <div class="header-top">
+      <button class="btn-back-icon" (click)="goBack()" title="Back">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <h2 class="notif-header-title">Notifications</h2>
+      <button class="mark-all-btn" (click)="markAllAsRead()">Mark all read</button>
+    </div>
+  </header>
+
+  <!-- Unread Subtitle Count Bar -->
+  <div class="unread-subtitle-bar">
+    <span>{{ notificationService.unreadCount() }} unread notifications</span>
+  </div>
+
+  <main class="notifications-content">
+    <div class="notifications-cards-list">
+      <div 
+        *ngFor="let notif of notificationService.notifications()" 
+        class="notif-card" 
+        [class.unread]="notif.isUnread"
+        (click)="onNotificationTap(notif)">
+        
+        <!-- Icon Circle -->
+        <div class="notif-icon-circle" [ngClass]="notif.type">
+          <span *ngIf="notif.type === 'confirmed'">✓</span>
+          <span *ngIf="notif.type === 'offer'">🎁</span>
+          <span *ngIf="notif.type === 'delay'">!</span>
+          <span *ngIf="notif.type === 'info'">ℹ</span>
+        </div>
+
+        <!-- Content Details -->
+        <div class="notif-card-body">
+          <div class="notif-title-row">
+            <h4 class="notif-card-title">{{ notif.title }}</h4>
+            <span *ngIf="notif.isUnread" class="unread-yellow-dot">●</span>
+          </div>
+          <p class="notif-card-msg">{{ notif.message }}</p>
+          <span class="notif-card-time">{{ notif.time }}</span>
+        </div>
+      </div>
+
+      <div *ngIf="notificationService.notifications().length === 0" class="empty-inbox">
+        <span class="bell-icon">🔔</span>
+        <h3>No Notifications Yet</h3>
+        <p>Updates on your bookings and offers will appear here.</p>
+      </div>
+    </div>
+  </main>
+
+  <app-bottom-nav></app-bottom-nav>
+</div>

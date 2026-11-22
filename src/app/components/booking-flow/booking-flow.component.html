@@ -467,7 +467,7 @@
       <div class="payment-mode-selector-bar" (click)="openPaymentModeModal()">
         <span class="pay-mode-label">Payment Mode</span>
         <div class="pay-right">
-          <span class="cash-dot">●</span>
+          <span class="cash-dot" [class.online-dot]="paymentMode === 'Online'">{{ paymentMode === 'Online' ? '💳' : '●' }}</span>
           <span class="selected-pay-name">{{ paymentMode }}</span>
           <span class="dropdown-chevron">▼</span>
         </div>
@@ -646,24 +646,24 @@
       <div class="sheet-handle"></div>
       <h2 class="sheet-title">Payment Mode</h2>
       <div class="payment-options-list">
-        <div class="pay-option-card" [class.selected]="paymentMode === 'Cash'" (click)="selectPaymentMode('Cash')">
+        <div class="pay-option-card" [class.selected]="tempPaymentMode === 'Cash'" (click)="selectPaymentMode('Cash')">
           <span class="pay-ico">💵</span>
           <div class="pay-meta">
             <strong>Cash</strong>
             <span>Pay directly to driver after trip</span>
           </div>
           <div class="pay-radio-circle">
-            <div class="radio-inner" *ngIf="paymentMode === 'Cash'"></div>
+            <div class="radio-inner" *ngIf="tempPaymentMode === 'Cash'"></div>
           </div>
         </div>
-        <div class="pay-option-card" [class.selected]="paymentMode === 'Online'" (click)="selectPaymentMode('Online')">
+        <div class="pay-option-card" [class.selected]="tempPaymentMode === 'Online'" (click)="selectPaymentMode('Online')">
           <span class="pay-ico">💳</span>
           <div class="pay-meta">
             <strong>Online</strong>
             <span>Razorpay / UPI / Cards / Net Banking</span>
           </div>
           <div class="pay-radio-circle">
-            <div class="radio-inner" *ngIf="paymentMode === 'Online'"></div>
+            <div class="radio-inner" *ngIf="tempPaymentMode === 'Online'"></div>
           </div>
         </div>
       </div>

@@ -285,25 +285,49 @@ body.dark-mode {
     }
   }
 
-  .booking-job-card {
+  .booking-job-card,
+  .booking-summary-card,
+  .booking-card {
     background: #1E293B !important;
     border-color: #334155 !important;
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25) !important;
 
-    .card-top h3, .card-top .booking-id {
+    .card-top h3, .card-top .booking-id, .booking-num, .booking-id-text {
       color: #F8FAFC !important;
     }
 
-    .address-line .address-text {
+    .address-line .address-text, .addr-text {
       color: #F8FAFC !important;
     }
 
-    .fare-box .fare-amount {
+    .veh-icon, .vehicle-img-frame {
+      background: #334155 !important;
+      color: #F8FAFC !important;
+    }
+
+    .veh-details h4, .vehicle-model-name {
+      color: #F8FAFC !important;
+    }
+
+    .schedule-sub, .pay-method-sub {
+      color: #94A3B8 !important;
+    }
+
+    .fare-box .fare-amount, .fare-val {
       color: #FBBF24 !important;
     }
 
-    .card-footer {
+    .route-preview-block {
+      background: #0F172A !important;
+      border: 1px solid #334155 !important;
+    }
+
+    .card-footer, .card-action-footer {
       border-color: #334155 !important;
+
+      .view-details-cta {
+        color: #FFC107 !important;
+      }
     }
   }
 
@@ -320,14 +344,63 @@ body.dark-mode {
     }
   }
 
-  .detail-view-container {
+  .detail-view-container,
+  .detail-full-view {
     background: #0F172A !important;
     color: #F8FAFC !important;
 
-    .detail-card {
+    .detail-card,
+    .scheduled-banner-card,
+    .completed-receipt-card,
+    .receipt-hero,
+    .cancelled-reason-card,
+    .active-trip-live-card,
+    .route-detail-card,
+    .trip-pricing-card,
+    .driver-profile-card,
+    .receipt-fare-table,
+    .driver-assigned-card {
       background: #1E293B !important;
-      border-color: #334155 !important;
+      border: 1px solid #334155 !important;
       color: #F8FAFC !important;
+
+      h2, h3, h4, strong {
+        color: #F8FAFC !important;
+      }
+
+      p, span.sub, .label-text, .row-label {
+        color: #94A3B8 !important;
+      }
+
+      .price-val, .amount-val, .total-fare, .row-val {
+        color: #FFC107 !important;
+      }
+
+      .fare-row {
+        border-bottom-color: #334155 !important;
+      }
+    }
+
+    .detail-top-nav {
+      background: #1E293B !important;
+      border-bottom: 1px solid #334155 !important;
+
+      h2 { color: #F8FAFC !important; }
+
+      .back-circle-btn {
+        background: #334155 !important;
+        color: #F8FAFC !important;
+        border: 1px solid #475569 !important;
+      }
+    }
+
+    .otp-verification-card {
+      background: rgba(255, 193, 7, 0.1) !important;
+      border: 1px solid rgba(255, 193, 7, 0.4) !important;
+
+      .otp-title { color: #FFC107 !important; }
+      .otp-digits { color: #F8FAFC !important; background: #0F172A !important; border: 1px solid #334155 !important; }
+      .otp-hint { color: #CBD5E1 !important; }
     }
   }
 }
@@ -527,5 +600,144 @@ body.dark-mode {
         stroke: #F59E0B !important;
       }
     }
+  }
+}
+
+
+/* Global Dark Mode Cancel Search Button Contrast Fix */
+[data-theme="dark"] .cancel-search-btn,
+.dark-mode .cancel-search-btn {
+  background-color: #1E293B !important;
+  color: #F8FAFC !important;
+  border-color: #334155 !important;
+}
+
+[data-theme="dark"] .cancel-search-btn:hover,
+.dark-mode .cancel-search-btn:hover {
+  background-color: #334155 !important;
+  color: #FFFFFF !important;
+  border-color: #64748B !important;
+}
+
+/* ======================================================= */
+/* GLOBAL DARK THEME FIXES FOR NOTIFICATIONS & DESKTOP ROOT */
+/* ======================================================= */
+[data-theme="dark"],
+.dark-mode {
+  app-root {
+    background-color: #0F172A !important;
+  }
+
+  .mobile-app-wrapper,
+  .notifications-page,
+  .notifications-content {
+    background-color: #0F172A !important;
+  }
+
+  .notifications-header,
+  .notif-dialog-header {
+    background-color: #1E293B !important;
+    border-color: #334155 !important;
+
+    .notif-header-title {
+      color: #F8FAFC !important;
+    }
+
+    .btn-back-icon {
+      color: #F8FAFC !important;
+    }
+
+    .mark-all-btn,
+    .mark-read-btn {
+      color: #FFC107 !important;
+    }
+  }
+
+  .unread-subtitle-bar {
+    color: #94A3B8 !important;
+  }
+
+  .notifications-cards-list {
+    .notif-card {
+      background-color: #1E293B !important;
+      border: 1px solid #334155 !important;
+
+      .notif-card-title {
+        color: #F8FAFC !important;
+      }
+
+      .notif-card-msg {
+        color: #CBD5E1 !important;
+      }
+
+      .notif-card-time {
+        color: #94A3B8 !important;
+      }
+
+      &.unread {
+        background-color: #1E293B !important;
+        border: 1px solid rgba(255, 193, 7, 0.6) !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;
+
+        .notif-card-title {
+          color: #F8FAFC !important;
+        }
+
+        .notif-card-msg {
+          color: #E2E8F0 !important;
+        }
+
+        .notif-card-time {
+          color: #94A3B8 !important;
+        }
+
+        .unread-yellow-dot {
+          color: #FFC107 !important;
+        }
+      }
+
+      &:hover {
+        background-color: #243046 !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45) !important;
+      }
+
+      .notif-icon-circle {
+        &.confirmed {
+          background: rgba(16, 185, 129, 0.2) !important;
+          color: #34D399 !important;
+        }
+
+        &.offer {
+          background: rgba(245, 158, 11, 0.2) !important;
+          color: #FBBF24 !important;
+        }
+
+        &.delay {
+          background: rgba(239, 68, 68, 0.2) !important;
+          color: #F87171 !important;
+        }
+
+        &.info {
+          background: rgba(59, 130, 246, 0.2) !important;
+          color: #60A5FA !important;
+        }
+      }
+    }
+
+    .empty-inbox {
+      color: #94A3B8 !important;
+
+      h3 {
+        color: #F8FAFC !important;
+      }
+      p {
+        color: #CBD5E1 !important;
+      }
+    }
+  }
+
+  .notifications-full-dialog {
+    background-color: #0F172A !important;
+    color: #F8FAFC !important;
   }
 }

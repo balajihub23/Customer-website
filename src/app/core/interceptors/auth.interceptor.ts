@@ -15,6 +15,23 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     return next(req);
   }
 
+  if (req.url.startsWith('https://maps.googleapis.com') || 
+      req.url.includes('openstreetmap.org') || 
+      req.url.includes('mymemory.translated.net') ||
+      req.url.startsWith('assets/') ||
+      req.url.includes('/assets/')) {
+    return next(req);
+  }
+
+  // Only attach auth tokens & custom app key and handle error routing for Rentron backend APIs
+  const isBackendApi = req.url.startsWith(environment.serverApi) ||
+                       req.url.startsWith('/api/') ||
+                       (!req.url.startsWith('http://') && !req.url.startsWith('https://'));
+  if (!isBackendApi) {
+    return next(req);
+  }
+
+
   const token = authService.getAccessToken();
   let headers = req.headers.set('X-Client-App-Key', environment.mobileAppKey || 'rentron-customer-mobile-app-secret-key-492BC');
 

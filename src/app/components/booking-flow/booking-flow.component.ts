@@ -1,5 +1,5 @@
 import { Subscription } from 'rxjs';
-import { Component, OnInit, inject, PLATFORM_ID, OnDestroy, AfterViewInit } from '@angular/core';
+import { Component, OnInit, inject, PLATFORM_ID, OnDestroy, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -62,6 +62,7 @@ export class BookingFlowComponent implements OnInit, AfterViewInit, OnDestroy {
   private platformId = inject(PLATFORM_ID);
   public themeService = inject(ThemeService);
   private googleMapService = inject(GoogleMapService);
+  private cdr = inject(ChangeDetectorRef);
 
   // Dynamic Google Maps API Key from booking_settings (No hardcoded sample places)
   googleApiKey: string = 'AIzaSyB2dovGx2YDfHA8AKmPsOSp4UAx158pEDs';
@@ -172,6 +173,7 @@ export class BookingFlowComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // Payment Mode
   paymentMode: 'Cash' | 'Online' = 'Cash';
+  tempPaymentMode: 'Cash' | 'Online' = 'Cash';
   showPaymentModeModal: boolean = false;
 
   // Review Booking Sheet
@@ -1334,15 +1336,21 @@ loadBookingSettingsAndMapKey(): void {
   }
 
   openPaymentModeModal(): void {
+    this.tempPaymentMode = this.paymentMode;
     this.showPaymentModeModal = true;
+    this.cdr.detectChanges();
   }
 
   selectPaymentMode(mode: 'Cash' | 'Online'): void {
+    this.tempPaymentMode = mode;
     this.paymentMode = mode;
+    this.cdr.detectChanges();
   }
 
   updatePaymentMode(): void {
+    this.paymentMode = this.tempPaymentMode;
     this.showPaymentModeModal = false;
+    this.cdr.detectChanges();
   }
 
   /**

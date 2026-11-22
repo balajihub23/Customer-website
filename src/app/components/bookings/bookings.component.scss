@@ -2186,3 +2186,269 @@
     transform: scale(0.98);
   }
 }
+
+/* ========================================================================== */
+/* DARK THEME SYSTEM OVERRIDES (Customer Bookings & Booking Details)           */
+/* ========================================================================== */
+:host-context([data-theme="dark"]),
+:host-context(.dark-mode),
+[data-theme="dark"],
+.dark-mode {
+
+  .bookings-viewport {
+    background-color: #0F172A !important;
+    color: #F8FAFC !important;
+  }
+
+  .bookings-header,
+  .bookings-top-header {
+    background: #1E293B !important;
+    border-bottom: 1px solid #334155 !important;
+
+    .screen-title, h1, h2 {
+      color: #F8FAFC !important;
+    }
+
+    .status-bar-row {
+      color: #94A3B8 !important;
+    }
+  }
+
+  .segmented-tabs-wrapper,
+  .filter-strip {
+    background: #1E293B !important;
+    border-bottom: 1px solid #334155 !important;
+
+    .tab-pill,
+    .filter-btn {
+      background: #334155 !important;
+      color: #CBD5E1 !important;
+      border: 1px solid transparent !important;
+
+      &.active {
+        background: #FFC107 !important;
+        color: #0F172A !important;
+        font-weight: 700 !important;
+        box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3) !important;
+      }
+    }
+  }
+
+  .btn-refresh-circle,
+  .refresh-btn {
+    background: #334155 !important;
+    color: #F8FAFC !important;
+    border: 1px solid #475569 !important;
+
+    &:hover {
+      background: #475569 !important;
+      color: #FFC107 !important;
+    }
+  }
+
+  /* Booking Cards in List */
+  .booking-summary-card,
+  .booking-card {
+    background: #1E293B !important;
+    border: 1px solid #334155 !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+
+    &:hover {
+      border-color: #64748B !important;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45) !important;
+    }
+
+    .booking-num,
+    .booking-id-text {
+      color: #F8FAFC !important;
+    }
+
+    .veh-icon,
+    .vehicle-img-frame {
+      background: #334155 !important;
+      color: #F8FAFC !important;
+    }
+
+    .veh-details h4,
+    .vehicle-model-name {
+      color: #F8FAFC !important;
+    }
+
+    .schedule-sub,
+    .driver-rating-line,
+    .booking-timing-sub {
+      color: #94A3B8 !important;
+    }
+
+    .card-fare-box .fare-val {
+      color: #FFC107 !important;
+    }
+
+    .card-fare-box .pay-method-sub {
+      color: #94A3B8 !important;
+    }
+
+    .route-preview-block,
+    .route-addresses-box {
+      background: #0F172A !important;
+      border: 1px solid #334155 !important;
+      border-radius: 10px !important;
+
+      .addr-text,
+      .address-text {
+        color: #E2E8F0 !important;
+      }
+    }
+
+    .card-action-footer .view-details-cta {
+      color: #FFC107 !important;
+      font-weight: 700 !important;
+    }
+  }
+
+  /* Status Pills in Dark Mode */
+  .status-pill,
+  .status-tag {
+    &.badge-active,
+    &.in-progress {
+      background: rgba(34, 197, 94, 0.2) !important;
+      color: #4ADE80 !important;
+      border: 1px solid rgba(34, 197, 94, 0.35) !important;
+    }
+    &.badge-scheduled,
+    &.scheduled {
+      background: rgba(59, 130, 246, 0.2) !important;
+      color: #60A5FA !important;
+      border: 1px solid rgba(59, 130, 246, 0.35) !important;
+    }
+    &.badge-completed,
+    &.completed {
+      background: rgba(148, 163, 184, 0.2) !important;
+      color: #CBD5E1 !important;
+      border: 1px solid rgba(148, 163, 184, 0.3) !important;
+    }
+    &.badge-cancelled,
+    &.cancelled {
+      background: rgba(239, 68, 68, 0.2) !important;
+      color: #F87171 !important;
+      border: 1px solid rgba(239, 68, 68, 0.35) !important;
+    }
+    &.badge-searching {
+      background: rgba(245, 158, 11, 0.2) !important;
+      color: #FBBF24 !important;
+      border: 1px solid rgba(245, 158, 11, 0.35) !important;
+    }
+  }
+
+  /* Booking Details Full Screens (Scheduled, Completed, Cancelled, Active) */
+  .detail-full-view {
+    background: #0F172A !important;
+    color: #F8FAFC !important;
+
+    .detail-top-nav,
+    .detail-header {
+      background: #1E293B !important;
+      border-bottom: 1px solid #334155 !important;
+
+      h2, h3, .title {
+        color: #F8FAFC !important;
+      }
+
+      .back-circle-btn,
+      .back-btn {
+        background: #334155 !important;
+        color: #F8FAFC !important;
+        border: 1px solid #475569 !important;
+
+        &:hover {
+          background: #475569 !important;
+          color: #FFC107 !important;
+        }
+      }
+    }
+
+    .scheduled-banner-card,
+    .completed-receipt-card,
+    .receipt-hero,
+    .cancelled-reason-card,
+    .active-trip-live-card,
+    .route-detail-card,
+    .trip-pricing-card,
+    .driver-profile-card,
+    .receipt-fare-table,
+    .driver-assigned-card,
+    .detail-card {
+      background: #1E293B !important;
+      border: 1px solid #334155 !important;
+      color: #F8FAFC !important;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+
+      h3, h4, strong {
+        color: #F8FAFC !important;
+      }
+
+      p, span.sub, .label-text {
+        color: #94A3B8 !important;
+      }
+
+      .price-val, .amount-val, .total-fare {
+        color: #FFC107 !important;
+      }
+
+      .fare-row {
+        border-bottom-color: #334155 !important;
+        
+        .row-label { color: #94A3B8 !important; }
+        .row-val { color: #F8FAFC !important; }
+        &.total-row {
+          border-top: 1px solid #334155 !important;
+          .row-label, .row-val { color: #FFC107 !important; font-weight: 800 !important; }
+        }
+      }
+    }
+
+    .otp-verification-card {
+      background: rgba(255, 193, 7, 0.1) !important;
+      border: 1.5px solid rgba(255, 193, 7, 0.4) !important;
+
+      .otp-title { color: #FFC107 !important; }
+      .otp-digits { color: #F8FAFC !important; background: #0F172A !important; border: 1px solid #334155 !important; }
+      .otp-hint { color: #CBD5E1 !important; }
+    }
+
+    .route-point {
+      .route-addr { color: #F8FAFC !important; }
+      .route-sub { color: #94A3B8 !important; }
+    }
+
+    .route-connector,
+    .route-divider-line {
+      background: #334155 !important;
+    }
+
+    .action-footer-sticky {
+      background: #1E293B !important;
+      border-top: 1px solid #334155 !important;
+    }
+
+    .btn-outline-red {
+      background: transparent !important;
+      border: 1.5px solid #EF4444 !important;
+      color: #F87171 !important;
+
+      &:hover {
+        background: rgba(239, 68, 68, 0.15) !important;
+      }
+    }
+  }
+
+  /* Empty State */
+  .empty-state-card {
+    background: #1E293B !important;
+    border: 1px solid #334155 !important;
+    color: #94A3B8 !important;
+
+    h3 { color: #F8FAFC !important; }
+    p { color: #94A3B8 !important; }
+  }
+}

@@ -232,9 +232,15 @@
         font-weight: 700;
         color: var(--text-primary, #0f172a);
         cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 
         &:hover {
           background: #f1f5f9;
+          color: #0f172a;
         }
       }
     }
@@ -1582,5 +1588,20 @@
       color: #92400e;
       font-weight: 700;
     }
+  }
+}
+
+
+/* Dark mode cancel button hover fix */
+:host-context([data-theme="dark"]) .cancel-search-btn,
+[data-theme="dark"] .cancel-search-btn {
+  background: #1E293B !important;
+  color: #F8FAFC !important;
+  border-color: #334155 !important;
+
+  &:hover {
+    background: #334155 !important;
+    color: #FFFFFF !important;
+    border-color: #64748B !important;
   }
 }

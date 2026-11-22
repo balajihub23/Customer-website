@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { GlobalAutoTranslateService } from './plugins/language-plugin';
 
 @Component({
   selector: 'app-root',
@@ -7,6 +8,11 @@ import { RouterOutlet } from '@angular/router';
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   title = 'customerWebsite';
+  private globalAutoTranslate = inject(GlobalAutoTranslateService);
+
+  ngOnInit(): void {
+    this.globalAutoTranslate.startGlobalAutoTranslate();
+  }
 }

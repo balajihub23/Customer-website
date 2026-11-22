@@ -129,12 +129,12 @@
   backdrop-filter: blur(4px);
   z-index: 9999;
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
   justify-content: center;
 
   .notifications-full-dialog {
     width: 100%;
-    max-width: 440px;
+    max-width: 480px; margin: 0 auto;
     height: 100vh;
     background: var(--surface, #FFFFFF);
     color: var(--text-primary, #0F172A);
@@ -212,14 +212,19 @@
         transition: all 0.2s ease;
         position: relative;
 
-        /* Soft Yellow Highlight for Unread Cards (Matching Screenshot 2) */
+        /* Soft Yellow Highlight for Unread Cards in Light Mode */
         &.unread {
-          background: rgba(254, 252, 232, 0.95);
-          border: 1px solid rgba(254, 240, 138, 0.9);
+          background: #FFFBEB;
+          border: 1px solid rgba(245, 158, 11, 0.4);
 
-          [data-theme="dark"] & {
-            background: rgba(42, 38, 22, 0.9);
-            border: 1px solid rgba(245, 158, 11, 0.35);
+          .notif-card-title {
+            color: #0F172A;
+          }
+          .notif-card-msg {
+            color: #475569;
+          }
+          .notif-card-time {
+            color: #64748B;
           }
         }
 

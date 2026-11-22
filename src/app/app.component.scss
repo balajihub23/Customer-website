@@ -3,7 +3,13 @@
   width: 100%;
   min-height: 100vh;
   min-height: 100dvh;
-  background-color: #f1f5f9;
+  background-color: var(--app-background, #f1f5f9);
+  transition: background-color 0.3s ease;
+}
+
+:host-context([data-theme="dark"]),
+:host-context(.dark-mode) {
+  background-color: #0F172A !important;
 }
 
 .mobile-app-container {
@@ -12,12 +18,13 @@
   min-height: 100vh;
   min-height: 100dvh;
   margin: 0 auto;
-  background-color: #ffffff;
+  background-color: var(--app-background, #ffffff);
   position: relative;
   overflow-x: hidden;
   box-shadow: 0 0 25px rgba(0, 0, 0, 0.06);
   display: flex;
   flex-direction: column;
+  transition: background-color 0.3s ease;
 
   @media screen and (max-width: 480px) {
     max-width: 100%;

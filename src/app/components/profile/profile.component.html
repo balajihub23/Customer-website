@@ -14,9 +14,9 @@
             <div class="initials-avatar">{{ getInitials() }}</div>
           </div>
           <div class="hero-info">
-            <h3 class="driver-name">{{ customerProfile.fullName || 'Valued Customer' }}</h3>
+            <h3 class="driver-name notranslate" notranslate translate="no">{{ customerProfile.fullName || 'Valued Customer' }}</h3>
             <p class="driver-role">Customer Account</p>
-            <p *ngIf="customerProfile.phone" class="driver-phone">+91 {{ customerProfile.phone }}</p>
+            <p *ngIf="customerProfile.phone" class="driver-phone notranslate" notranslate translate="no">+91 {{ customerProfile.phone }}</p>
           </div>
         </div>
       </div>
@@ -83,7 +83,7 @@
             </label>
           </div>
 
-          <div class="menu-item" (click)="navigateTo('LANGUAGE')">
+          <div class="menu-item" (click)="openLanguageModal()">
             <div class="menu-left">
               <span class="m-icon icon-globe">🌐</span>
               <span class="m-title">Language</span>
@@ -526,3 +526,4 @@
   <app-logout-modal *ngIf="showLogoutModal" (cancel)="cancelLogout()" (confirm)="confirmLogout()">
   </app-logout-modal>
 </div>
+<app-language-switcher [(isOpen)]="isLanguageModalOpen" displayMode="bottom-sheet" (languageChanged)="onLanguageChanged($event)"></app-language-switcher>

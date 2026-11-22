@@ -97,7 +97,7 @@ export class CustomerHeaderComponent implements OnInit {
   }
 
   toggleNotifications(): void {
-    this.showNotificationsModal = !this.showNotificationsModal;
+    this.router.navigate(['/notifications']);
   }
 
   markAllAsRead(): void {

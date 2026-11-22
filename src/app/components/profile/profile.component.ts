@@ -8,6 +8,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { SupportService, SupportTicket, SupportMessage } from '../../core/services/support.service';
 import { BottomNavComponent } from '../../shared/components/bottom-nav/bottom-nav.component';
 import { LogoutModalComponent } from '../../shared/components/logout-modal/logout-modal.component';
+import { LanguageManagerService, GlobalAutoTranslateService, SupportedLanguage, LanguageSwitcherComponent } from '../../plugins/language-plugin';
 
 export type ProfileSubView = 
   | 'MAIN' 
@@ -39,7 +40,8 @@ export interface SavedSiteAddress {
     CommonModule,
     FormsModule,
     BottomNavComponent,
-    LogoutModalComponent
+    LogoutModalComponent,
+    LanguageSwitcherComponent
   ],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.scss'
@@ -51,6 +53,8 @@ export class CustomerProfileComponent implements OnInit {
   private authService = inject(AuthService);
   private supportService = inject(SupportService);
   private router = inject(Router);
+  public languageManager = inject(LanguageManagerService);
+  public globalAutoTranslate = inject(GlobalAutoTranslateService);
 
   currentView: ProfileSubView = 'MAIN';
 
@@ -133,6 +137,24 @@ export class CustomerProfileComponent implements OnInit {
   notificationsEnabled: boolean = true;
   showLogoutModal: boolean = false;
   selectedLanguage: string = 'English';
+  isLanguageModalOpen: boolean = false;
+
+  openLanguageModal(): void {
+    this.isLanguageModalOpen = true;
+  }
+
+  onLanguageChanged(langCode: any): void {
+    const match = this.languages.find(l => l.code === langCode);
+    if (match) {
+      this.selectedLanguage = match.name;
+      this.customerProfile.language = match.name;
+      if (this.authService.isLoggedIn()) {
+        this.customerService.updateProfile({ language: match.name }).subscribe({
+          error: (err) => console.warn('Could not update profile language', err)
+        });
+      }
+    }
+  }
 
   languages = [
     { code: 'en', name: 'English', native: 'English' },
@@ -148,6 +170,11 @@ export class CustomerProfileComponent implements OnInit {
   @ViewChild('chatContainer') chatContainer?: ElementRef;
 
   ngOnInit(): void {
+    const activeLang = this.languageManager.getCurrentLanguage();
+    const foundLang = this.languages.find(l => l.code === activeLang);
+    if (foundLang) {
+      this.selectedLanguage = foundLang.name;
+    }
     this.loadProfile();
     this.loadSavedAddresses();
     this.loadTickets();
@@ -284,6 +311,10 @@ export class CustomerProfileComponent implements OnInit {
   }
 
   navigateTo(view: ProfileSubView): void {
+    if (view === 'LANGUAGE') {
+      this.openLanguageModal();
+      return;
+    }
     if (!this.isLoggedIn() && (view === 'PERSONAL_INFO' || view === 'SAVED_ADDRESS' || view === 'EDIT_PERSONAL_INFO')) {
       this.router.navigate(['/auth']);
       return;
@@ -473,9 +504,23 @@ export class CustomerProfileComponent implements OnInit {
   }
 
   onApplyLanguage(): void {
-    this.customerProfile.language = this.selectedLanguage;
-    this.customerService.updateProfile({ language: this.selectedLanguage }).subscribe();
-    this.currentView = 'MAIN';
+    const langObj = this.languages.find(l => l.name === this.selectedLanguage || l.code === this.selectedLanguage);
+    const langCode = langObj ? (langObj.code as SupportedLanguage) : SupportedLanguage.EN;
+    this.languageManager.setLanguage(langCode).then(() => {
+      this.globalAutoTranslate.forceReTranslate();
+      this.customerProfile.language = this.selectedLanguage;
+      if (this.authService.isLoggedIn()) {
+        this.customerService.updateProfile({ language: this.selectedLanguage }).subscribe({
+          error: (err) => console.warn('Could not update profile language', err)
+        });
+      }
+      this.currentView = 'MAIN';
+      setTimeout(() => {
+        if (typeof window !== 'undefined') {
+          window.location.reload();
+        }
+      }, 80);
+    });
   }
 
   isDarkMode(): boolean {
