@@ -320,6 +320,24 @@
   box-shadow: var(--shadow-sm);
   width: 100%;
   box-sizing: border-box;
+
+  &.policy-body {
+    h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary, #111827);
+      margin: 0 0 12px 0;
+    }
+    p {
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text-secondary, #4B5563);
+      margin: 0 0 12px 0;
+      strong {
+        color: var(--text-primary, #111827);
+      }
+    }
+  }
 }
 
 .info-field {

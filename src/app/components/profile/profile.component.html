@@ -510,11 +510,20 @@
     </header>
 
     <main class="profile-content animate-fade-in">
-      <div class="info-card policy-body">
-        <h3>Rentron Platform Rules</h3>
-        <p>By using the Rentron Application, you agree to follow safety rules, accurate site address entries, and
-          booking guidelines.</p>
-        <p>Your privacy and site data are protected securely.</p>
+      <div *ngIf="currentView === 'PRIVACY'" class="info-card policy-body">
+        <h3>Rentron Privacy Policy</h3>
+        <p><strong>1. Data Collection & Site Location</strong>: Rentron collects your mobile phone number, name, and GPS coordinates solely to facilitate heavy machinery and vehicle booking and dispatch operations.</p>
+        <p><strong>2. Payment Security</strong>: All transactions are processed through PCI-DSS certified payment gateways (Razorpay). Rentron never stores your full card credentials or banking PINs.</p>
+        <p><strong>3. Data Protection</strong>: Your personal and booking information is protected with industry-standard encryption and never sold or shared with unauthorized third parties.</p>
+        <p>For privacy queries, contact <strong>privacy&#64;rentron.in</strong>.</p>
+      </div>
+
+      <div *ngIf="currentView === 'TERMS'" class="info-card policy-body">
+        <h3>Rentron Platform Rules & Terms</h3>
+        <p><strong>1. Account & Booking</strong>: By using Rentron, you agree to accurate site entries, prompt verification, and adherence to safe operational guidelines.</p>
+        <p><strong>2. Safety Compliance</strong>: Site owners are strictly responsible for ground safety clearance and compliance during equipment mobilization.</p>
+        <p><strong>3. Cancellation</strong>: Dispatched machinery cancellations are subject to mobilization charges.</p>
+        <p>For support, contact <strong>support&#64;rentron.in</strong>.</p>
       </div>
     </main>
   </div>
@@ -523,7 +532,12 @@
   <app-bottom-nav activeTab="PROFILE"></app-bottom-nav>
 
   <!-- Logout Modal -->
-  <app-logout-modal *ngIf="showLogoutModal" (cancel)="cancelLogout()" (confirm)="confirmLogout()">
+  <app-logout-modal
+    [isOpen]="showLogoutModal"
+    (confirm)="confirmLogout()"
+    (onConfirm)="confirmLogout()"
+    (cancel)="cancelLogout()"
+    (onCancel)="cancelLogout()">
   </app-logout-modal>
 </div>
 <app-language-switcher [(isOpen)]="isLanguageModalOpen" displayMode="bottom-sheet" (languageChanged)="onLanguageChanged($event)"></app-language-switcher>

@@ -55,11 +55,22 @@ export class WebSocketService implements OnDestroy {
     const wsProtocol = this.baseUrl.startsWith('https') ? 'wss' : 'ws';
     const cleanBase = this.baseUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
     
-    // Primary Spring STOMP endpoint: /ws-rentron/websocket, fallback: /ws-rentron
-    const primaryWsUrl = `${wsProtocol}://${cleanBase}/ws-rentron/websocket`;
-    const fallbackWsUrl = `${wsProtocol}://${cleanBase}/ws-rentron`;
+    // Primary Spring STOMP endpoint: /ws-rentron/websocket, fallback: /ws-rentron & driver gateway
+    const candidateUrls: string[] = [
+      `${wsProtocol}://${cleanBase}/ws-rentron/websocket`,
+      `${wsProtocol}://${cleanBase}/ws-rentron`
+    ];
 
-    const tryConnect = (targetUrl: string, isFallback: boolean = false) => {
+    if (!cleanBase.includes('driver.rentron.in')) {
+      candidateUrls.push(
+        'wss://driver.rentron.in/rentron-gateway/rentron-svc-backend-1.0-SNAPSHOT/ws-rentron/websocket',
+        'wss://driver.rentron.in/rentron-gateway/rentron-svc-backend-1.0-SNAPSHOT/ws-rentron'
+      );
+    }
+
+    let candidateIndex = 0;
+
+    const tryConnect = (targetUrl: string) => {
       try {
         this.ws = new WebSocket(targetUrl);
 
@@ -120,8 +131,9 @@ export class WebSocketService implements OnDestroy {
         };
 
         this.ws.onerror = () => {
-          if (!isFallback) {
-            tryConnect(fallbackWsUrl, true);
+          candidateIndex++;
+          if (candidateIndex < candidateUrls.length) {
+            tryConnect(candidateUrls[candidateIndex]);
           } else {
             console.warn('[Rentron WS] WebSocket connection failed. Using REST polling fallback.');
           }
@@ -137,13 +149,14 @@ export class WebSocketService implements OnDestroy {
           }
         };
       } catch (e) {
-        if (!isFallback) {
-          tryConnect(fallbackWsUrl, true);
+        candidateIndex++;
+        if (candidateIndex < candidateUrls.length) {
+          tryConnect(candidateUrls[candidateIndex]);
         }
       }
     };
 
-    tryConnect(primaryWsUrl);
+    tryConnect(candidateUrls[0]);
   }
 
   subscribeToDriverStatus(): void {

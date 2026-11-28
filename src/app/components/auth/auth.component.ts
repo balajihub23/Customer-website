@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { CustomerService } from '../../core/services/customer.service';
 import { WebSocketService } from '../../core/services/websocket.service';
@@ -11,7 +11,7 @@ import { Subscription } from 'rxjs';
 @Component({
   selector: 'app-auth',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './auth.component.html',
   styleUrl: './auth.component.scss'
 })
@@ -84,6 +84,22 @@ export class AuthComponent implements OnInit, OnDestroy {
     this.phoneNumber = input.value.replace(/[^0-9]/g, '').slice(0, 10);
     input.value = this.phoneNumber;
     this.errorMessage = '';
+  }
+
+  goToTerms(e?: Event): void {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    this.router.navigate(['/terms']);
+  }
+
+  goToPrivacy(e?: Event): void {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    this.router.navigate(['/privacy']);
   }
 
   submitPhone(): void {

@@ -10,32 +10,38 @@
   .auth-card {
     flex: 1;
     width: 100%;
+    max-width: 440px;
+    margin: 0 auto;
     background: var(--card-bg, #FFFFFF);
     border-radius: 0;
-    padding: 32px 24px 40px;
+    padding: 24px 20px;
     box-sizing: border-box;
     box-shadow: none;
     position: relative;
     display: flex;
     flex-direction: column;
 
-    .back-btn {
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      background: var(--bg-secondary, #F2F2F7);
-      border: none;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
+    .auth-header {
+      margin-bottom: 12px;
       display: flex;
       align-items: center;
-      justify-content: center;
-      font-size: 16px;
+    }
+
+    .back-btn {
+      background: none;
+      border: none;
+      font-size: 22px;
+      color: #111827;
       cursor: pointer;
-      transform: rotate(180deg);
-      color: var(--text-color, #1C1C1E);
-      z-index: 10;
+      padding: 4px 8px 4px 0;
+      display: inline-flex;
+      align-items: center;
+      line-height: 1;
+      transition: transform 0.15s ease;
+
+      &:hover {
+        transform: translateX(-2px);
+      }
     }
   }
 }
@@ -49,12 +55,18 @@
   .yellow-icon-box {
     width: 64px;
     height: 64px;
-    background: #FFC107;
     border-radius: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
     box-shadow: 0 6px 16px rgba(255, 193, 7, 0.3);
+
+    .brand-logo-img {
+      width: 100%;
+      height: 100%;
+      border-radius: 18px;
+      object-fit: cover;
+    }
 
     svg {
       width: 38px;
@@ -63,23 +75,49 @@
   }
 }
 
-.welcome-title, .auth-heading {
-  font-size: 26px;
-  font-weight: 800;
-  color: var(--text-color, #1C1C1E);
-  margin: 0 0 8px 0;
-  text-align: center;
+.phone-content-center {
+  margin: auto 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
-.welcome-sub, .auth-sub {
+.welcome-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: #111827;
+  margin: 0 0 8px 0;
+  text-align: center;
+  letter-spacing: -0.5px;
+}
+
+.welcome-sub {
   font-size: 14px;
-  color: var(--text-muted, #7C7C80);
+  color: #6B7280;
   margin: 0 0 28px 0;
   text-align: center;
-  line-height: 1.4;
+  line-height: 1.5;
+}
 
-  strong {
-    color: var(--text-color, #1C1C1E);
+.otp-step, .profile-step {
+  .auth-heading {
+    font-size: 26px;
+    font-weight: 800;
+    color: #111827;
+    margin: 0 0 6px 0;
+    text-align: left;
+  }
+
+  .auth-sub {
+    font-size: 14px;
+    color: #6B7280;
+    margin: 0 0 28px 0;
+    text-align: left;
+    line-height: 1.5;
+
+    strong {
+      color: #111827;
+    }
   }
 }
 
@@ -142,26 +180,27 @@
 
 .otp-boxes {
   display: flex;
+  justify-content: space-between;
   gap: 8px;
-  justify-content: center;
   margin-bottom: 24px;
 
   .otp-field {
     width: 48px;
-    height: 54px;
-    background: var(--bg-secondary, #F8F9FA);
-    border: 1.5px solid var(--border-color, #E9ECEF);
-    border-radius: 14px;
+    height: 56px;
+    background: #F8F9FA;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
     text-align: center;
     font-size: 22px;
     font-weight: 700;
-    color: var(--text-color, #1C1C1E);
+    color: #111827;
     outline: none;
     transition: all 0.2s;
 
-    &:focus, &.filled {
-      border-color: var(--primary, #FFC107);
-      background: rgba(255, 193, 7, 0.05);
+    &:focus {
+      border-color: #FFC107;
+      background: #FFFFFF;
+      box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.25);
     }
   }
 }
@@ -172,38 +211,45 @@
 
   .timer-text {
     font-size: 13px;
-    color: var(--text-muted, #7C7C80);
+    color: #D97706;
+    font-weight: 600;
   }
 
   .resend-link {
     background: none;
     border: none;
-    color: #007AFF;
-    font-weight: 600;
-    font-size: 14px;
+    color: #111827;
+    font-weight: 700;
+    font-size: 13px;
     cursor: pointer;
+    text-decoration: underline;
+
+    &:hover {
+      color: #000000;
+    }
   }
 }
 
 .submit-btn {
   width: 100%;
   height: 52px;
-  background: var(--primary, #FFC107);
-  color: #1C1C1E;
+  background: #FFC107;
+  color: #111827;
   border: none;
   border-radius: 14px;
   font-weight: 700;
-  font-size: 16px;
+  font-size: 15px;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(255, 193, 7, 0.3);
+  box-shadow: 0 4px 14px rgba(255, 193, 7, 0.4);
   transition: opacity 0.2s, transform 0.1s;
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   margin-top: 10px;
 
   &:disabled {
-    opacity: 0.5;
+    opacity: 0.6;
     cursor: not-allowed;
     box-shadow: none;
   }

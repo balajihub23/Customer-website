@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, PLATFORM_ID, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, inject, PLATFORM_ID, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -53,6 +53,7 @@ export class CustomerProfileComponent implements OnInit {
   private authService = inject(AuthService);
   private supportService = inject(SupportService);
   private router = inject(Router);
+  private cdr = inject(ChangeDetectorRef);
   public languageManager = inject(LanguageManagerService);
   public globalAutoTranslate = inject(GlobalAutoTranslateService);
 
@@ -311,6 +312,16 @@ export class CustomerProfileComponent implements OnInit {
   }
 
   navigateTo(view: ProfileSubView): void {
+    if (view === 'TERMS') {
+      this.currentView = 'TERMS';
+      this.cdr.detectChanges();
+      return;
+    }
+    if (view === 'PRIVACY') {
+      this.currentView = 'PRIVACY';
+      this.cdr.detectChanges();
+      return;
+    }
     if (view === 'LANGUAGE') {
       this.openLanguageModal();
       return;
@@ -328,6 +339,7 @@ export class CustomerProfileComponent implements OnInit {
       this.supportViewMode = 'LIST';
       this.loadTickets();
     }
+    this.cdr.detectChanges();
   }
 
   // Saved Address Methods

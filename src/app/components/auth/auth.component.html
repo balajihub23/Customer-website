@@ -1,61 +1,54 @@
 <div class="auth-container">
   <!-- Step 1: Phone Number Input Screen -->
   <div *ngIf="step === 'phone'" class="auth-card phone-step">
-    <div class="brand-icon-wrapper">
-      <div class="yellow-icon-box">
-        <svg viewBox="0 0 36 36" fill="none">
-          <rect width="36" height="36" rx="10" fill="#FFC107"/>
-          <path d="M8 22 L14 14 L22 14 L28 22 Z" fill="#1C1C1E"/>
-          <circle cx="12" cy="24" r="3" fill="#1C1C1E"/>
-          <circle cx="24" cy="24" r="3" fill="#1C1C1E"/>
-        </svg>
-      </div>
-    </div>
-
-    <h1 class="welcome-title">Welcome</h1>
-    <p class="welcome-sub">Enter your mobile number to continue</p>
-
-    <div class="form-group">
-      <label>Mobile Number</label>
-      <div class="phone-input-group">
-        <div class="country-selector">
-          <span class="flag">🇮🇳</span>
-          <span class="code">+91</span>
-          <span class="chevron">▼</span>
+    <div class="phone-content-center">
+      <div class="brand-icon-wrapper">
+        <div class="yellow-icon-box">
+          <img src="assets/images/rentron_logo.png" alt="Rentron" class="brand-logo-img" />
         </div>
-        <input 
-          type="tel" 
-          placeholder="Enter mobile number"
-          [value]="phoneNumber"
-          (input)="onPhoneInput($event)"
-          maxlength="10"
-        />
       </div>
-    </div>
 
-    <div *ngIf="errorMessage" class="error-banner">
-      {{ errorMessage }}
-    </div>
+      <h1 class="welcome-title">Welcome</h1>
+      <p class="welcome-sub">Enter your mobile number to continue</p>
 
-    <button 
-      class="submit-btn" 
-      [disabled]="phoneNumber.length !== 10 || loading"
-      (click)="submitPhone()">
-      <span *ngIf="!loading">Continue ➔</span>
-      <span *ngIf="loading" class="spinner"></span>
-    </button>
+      <div class="form-group">
+        <label>Mobile Number</label>
+        <div class="phone-input-group">
+          <div class="country-selector">
+            <span class="flag">🇮🇳</span>
+            <span class="code">+91</span>
+            <span class="chevron">▼</span>
+          </div>
+          <input type="tel" placeholder="Enter mobile number" [value]="phoneNumber" (input)="onPhoneInput($event)"
+            maxlength="10" />
+        </div>
+      </div>
+
+      <div *ngIf="errorMessage" class="error-banner">
+        {{ errorMessage }}
+      </div>
+
+      <button class="submit-btn" [disabled]="phoneNumber.length !== 10 || loading" (click)="submitPhone()">
+        <span *ngIf="!loading">Continue ➔</span>
+        <span *ngIf="loading" class="spinner"></span>
+      </button>
+    </div>
 
     <p class="legal-text">
-      By continuing, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
+      By continuing, you agree to our
+      <a routerLink="/terms" (click)="goToTerms($event)">Terms of Service</a> and
+      <a routerLink="/privacy" (click)="goToPrivacy($event)">Privacy Policy</a>.
     </p>
   </div>
 
   <!-- Step 2: Verify OTP Screen -->
   <div *ngIf="step === 'otp'" class="auth-card otp-step">
-    <button class="back-btn" (click)="goBack()">➔</button>
+    <div class="auth-header">
+      <button class="back-btn" (click)="goBack()">←</button>
+    </div>
 
     <!-- WebSocket Test OTP Banner -->
-    <div *ngIf="showTestOtpBanner" class="test-otp-banner">
+    <!-- <div *ngIf="showTestOtpBanner" class="test-otp-banner">
       <div class="test-otp-header">
         <span class="test-badge">⚡ Test Mode (WebSocket OTP)</span>
       </div>
@@ -63,24 +56,16 @@
         <span>Received Code: <strong>{{ testOtp }}</strong></span>
         <button type="button" class="auto-fill-btn" (click)="handleIncomingOtp(testOtp)">Auto-Filled ✓</button>
       </div>
-    </div>
+    </div> -->
 
     <h1 class="auth-heading">Verify OTP</h1>
     <p class="auth-sub">Enter the 6-digit code sent to<br><strong>+91 {{ phoneNumber }}</strong></p>
 
     <div class="otp-boxes">
       @for (digit of otpDigits; track $index) {
-        <input 
-          type="text" 
-          maxlength="1"
-          class="otp-field"
-          [class.filled]="otpDigits[$index] !== ''"
-          [value]="otpDigits[$index]"
-          (input)="onOtpInput($event, $index)"
-          (keyup)="onOtpKeyDown($event, $index)"
-          (paste)="onOtpPaste($event)"
-          (keyup.enter)="submitOtp()"
-        />
+      <input type="text" maxlength="1" class="otp-field" [class.filled]="otpDigits[$index] !== ''"
+        [value]="otpDigits[$index]" (input)="onOtpInput($event, $index)" (keyup)="onOtpKeyDown($event, $index)"
+        (paste)="onOtpPaste($event)" (keyup.enter)="submitOtp()" />
       }
     </div>
 
@@ -89,10 +74,7 @@
       <button *ngIf="resendTimer === 0" class="resend-link" (click)="submitPhone()">Resend OTP</button>
     </div>
 
-    <button 
-      class="submit-btn" 
-      [disabled]="!isOtpComplete || loading"
-      (click)="submitOtp()">
+    <button class="submit-btn" [disabled]="!isOtpComplete || loading" (click)="submitOtp()">
       <span *ngIf="!loading">Verify & Continue ➔</span>
       <span *ngIf="loading" class="spinner"></span>
     </button>
@@ -100,7 +82,9 @@
 
   <!-- Step 3: Create Profile Screen -->
   <div *ngIf="step === 'profile'" class="auth-card profile-step">
-    <button class="back-btn" (click)="goBack()">➔</button>
+    <div class="auth-header">
+      <button class="back-btn" (click)="goBack()">←</button>
+    </div>
 
     <h1 class="auth-heading">Create your profile</h1>
     <p class="auth-sub">Complete your profile to start booking</p>
@@ -150,7 +134,8 @@
   <div *ngIf="step === 'success'" class="auth-card success-step">
     <div class="success-icon-wrapper">
       <div class="yellow-circle-check">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#1C1C1E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#1C1C1E" stroke-width="3" stroke-linecap="round"
+          stroke-linejoin="round">
           <polyline points="20 6 9 17 4 12"></polyline>
         </svg>
       </div>

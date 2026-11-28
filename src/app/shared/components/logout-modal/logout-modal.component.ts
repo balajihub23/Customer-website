@@ -9,7 +9,7 @@ import { CommonModule } from '@angular/common';
   styleUrl: './logout-modal.component.scss'
 })
 export class LogoutModalComponent {
-  @Input() isOpen: boolean = false;
+  @Input() isOpen: boolean = true;
   
   @Output() confirm = new EventEmitter<void>();
   @Output() onConfirm = new EventEmitter<void>();
