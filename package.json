@@ -5,9 +5,10 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "build:prod": "ng build --configuration production",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "serve:ssr:customerWebsite": "node dist/customer-website/server/server.mjs",
+    "serve:ssr:customerWebsite": "node dist/customer-website/server/server.mjs"
   },
   "private": true,
   "dependencies": {
